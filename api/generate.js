@@ -5,10 +5,8 @@ export default async function handler(req, res) {
 
     try {
         const API_KEY = process.env.GEMINI_API_KEY;
-        // Cambiamos el modelo a gemini-1.5-flash, que es el más estable y rápido para analizar imágenes actualmente
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
-        // Recibimos la imagen y la zona horaria enviada desde el frontend
         const { base64ImageData, mimeType, userTimeZone } = req.body;
 
         if (!base64ImageData) {
@@ -18,55 +16,48 @@ export default async function handler(req, res) {
         // LÓGICA DE LOCALIZACIÓN Y VOCABULARIO
         let languageInstruction = "Usa un español neutro.";
         
-        // Si detectamos que el usuario está en Argentina
         if (userTimeZone && userTimeZone.includes('Argentina')) {
             languageInstruction = `
-            OBLIGATORIO: Usa vocabulario, modismos y expresiones típicas de Argentina para E-commerce (estilo MercadoLibre). 
-            
-            DICCIONARIO DE TRADUCCIÓN OBLIGATORIA (REEMPLAZA SIEMPRE):
-            - Si ves una "Diadema" o "Cintillo" -> ESCRIBE SIEMPRE "Vincha"
+            OBLIGATORIO: Usa vocabulario, modismos y expresiones de Argentina. 
+            - Si ves "Diadema" o "Cintillo" -> ESCRIBE SIEMPRE "Vincha"
             - Si ves "Pendientes" o "Zarcillos" -> ESCRIBE SIEMPRE "Aros"
-            - Si ves "Gafas" o "Espejuelos" -> ESCRIBE SIEMPRE "Anteojos" o "Lentes"
-
+            - Si ves "Gafas" -> ESCRIBE SIEMPRE "Anteojos" o "Lentes"
             `;
-        } else if (userTimeZone && userTimeZone.includes('Madrid')) {
-             languageInstruction = "Usa vocabulario típico de España (ej. 'pendientes', 'anillos').";
         }
 
         const systemInstructionText = `
             Actúa como un experto en SEO, Marketing Digital y Copywriting para E-commerce.
             Tu tarea es analizar la imagen proporcionada y generar un Título y una Descripción, CUMPLIENDO ESTRICTAMENTE ESTAS REGLAS:
 
-            REGLAS PARA EL TÍTULO (CRÍTICO - SI FALLAS, LA APLICACIÓN SE ROMPE):
-            1. ESTRUCTURA OBLIGATORIA: [Objeto] + [Marca si es muy evidente, si no ignorar] + [Breve detalle visual/forma] + [Material real].
-            2. PROHIBICIÓN ABSOLUTA DE MARKETING: NUNCA uses frases poéticas, emotivas, de venta, o abstractas en el título (Ej: PROHIBIDO USAR "Elegancia y Suerte", "Joyería con Significado", "Brillo Único", "Ideal para Regalar"). El título debe describir el producto sin adjetivos subjetivos.
-            3. PROHIBICIÓN DE SÍMBOLOS: NUNCA uses el símbolo separador "|" o "-" seguido de frases de marketing en el título.
-            4. REGLA DE MATERIALES: NUNCA asumas que un producto es de Oro, Plata o Diamantes. Asume por defecto: Acero Quirúrgico, Metal, Aleación, Simil Oro, Baño Dorado, Color Dorado, Color Plateado, Cristales o Strass, a menos que un sello sea claramente legible. Si el objeto de la foto es de color plata, descríbelo como "Plateado" o "Color Plata", no como "Plata" ni "Plata 925".
+            REGLAS PARA EL TÍTULO (CRÍTICO):
+            1. ESTRUCTURA OBLIGATORIA: [Objeto] + [Breve detalle visual/forma] + [Material real]. (Ejemplo: "Aros de Argolla con Diseño de Mariposa en Acero Dorado").
+            2. PROHIBICIÓN ABSOLUTA DE MARKETING Y POESÍA: NUNCA uses frases de venta en el título (PROHIBIDO "Elegancia y Suerte", "Joyería con Significado", "Brillo Único", etc.).
+            3. PROHIBICIÓN DE SÍMBOLOS: NUNCA uses los separadores "|" o "-" en el título.
+            4. REGLA DE MATERIALES FALSOS: NUNCA asumas que un producto es de Oro, Plata o Diamantes. Asume SIEMPRE: Acero Quirúrgico, Metal, Aleación, Baño Dorado, Color Dorado, Color Plateado o Cristales. Si el objeto es de color plata, descríbelo como "Color Plata", "Plateado" o "Acero". NO pongas "Plata".
 
             REGLAS PARA LA DESCRIPCIÓN Y ETIQUETAS:
-            1. Primero, realiza una descripción técnica y detallada del producto. Incluye todos los detalles visuales de la foto: forma, partes, colores, texturas. Incluye medidas aproximadas obligatoriamente (ej. "Medidas: [espacio en blanco] cm"). Describe si tiene cadena, tipo de eslabón, tamaño relativo del dije. Esto debe ser un análisis intensivo de lo visual.
-            2. Luego, en un nuevo párrafo, puedes utilizar lenguaje persuasivo y de venta (el "llamador") destacando por qué deberían comprarlo, usos sugeridos o el público al que va dirigido.
-            3. Proporciona de 3 a 5 Etiquetas o Hashtags relevantes y precisos que describan físicamente al producto.
+            1. PÁRRAFO TÉCNICO: Primero, realiza una descripción técnica intensiva. Detalla la forma, partes, colores, texturas, tipo de cadena, tipo de eslabón, tamaño de dije. INCLUYE MEDIDAS OBLIGATORIAMENTE (ej. "Medidas aproximadas:    cm").
+            2. PÁRRAFO PERSUASIVO ("EL LLAMADOR"): Luego, en un nuevo párrafo, utiliza el lenguaje persuasivo de venta. Aquí SÍ puedes hablar de elegancia, suerte, el regalo ideal, etc.
+            3. ETIQUETAS: Proporciona de 3 a 5 Hashtags precisos.
             
-            INSTRUCCIÓN DE IDIOMA Y VOCABULARIO (CRÍTICO):
+            INSTRUCCIÓN DE IDIOMA Y VOCABULARIO:
             ${languageInstruction}
             
             FORMATO DE SALIDA (ESTRICTO):
-            Devuelve ÚNICAMENTE el siguiente bloque de texto en formato HTML. NO incluyas markdown \`\`\`html.
-            Respeta las etiquetas <strong>. No uses listas numeradas (Ej, no pongas "1. Título"). NO cambies las palabras "Título:" y "Descripción:".
+            Devuelve ÚNICAMENTE el siguiente bloque de texto en formato HTML. No uses listas numeradas como "1." o "2.".
             
-            <strong>Título:</strong> [Tu Título Descriptivo Aquí]<br><br>
+            <strong>Título:</strong> [Tu Título Técnico y Descriptivo Aquí]<br><br>
             <strong>Descripción:</strong><br>
-            [Tu descripción detallada técnica, material visual, forma, eslabones, tipo de cierre, todo lo que ves, medidas aproximadas aquí]<br><br>
-            [Tu párrafo persuasivo y de venta aquí]<br><br>
+            [Tu descripción técnica detallada, materiales visuales y medidas aquí]<br><br>
+            [Tu párrafo persuasivo y de venta (llamador) aquí]<br><br>
             <strong>Hashtags:</strong> #hash1 #hash2 #hash3
         `;
 
         const payload = {
             system_instruction: {
-                parts: {
-                    text: systemInstructionText
-                }
+                parts: [
+                    { text: systemInstructionText } // <- Aquí estaba el error, faltaban los corchetes []
+                ]
             },
             contents: [
                 {
@@ -92,7 +83,8 @@ export default async function handler(req, res) {
 
         if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`API Error: ${response.status} - ${errorText}`);
+            console.error("API Error Details:", errorText);
+            throw new Error(`API Error: ${response.status}`);
         }
 
         const result = await response.json();
