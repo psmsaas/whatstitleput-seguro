@@ -5,7 +5,8 @@ export default async function handler(req, res) {
 
     try {
         const API_KEY = process.env.GEMINI_API_KEY;
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        // ACTUALIZACIÓN DE MODELO: Cambiamos a gemini-3.5-flash y nos aseguramos de usar v1beta
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${API_KEY}`;
 
         const { base64ImageData, mimeType, userTimeZone } = req.body;
 
@@ -30,10 +31,10 @@ export default async function handler(req, res) {
             Tu tarea es analizar la imagen proporcionada y generar un Título y una Descripción, CUMPLIENDO ESTRICTAMENTE ESTAS REGLAS:
 
             REGLAS PARA EL TÍTULO (CRÍTICO):
-            1. ESTRUCTURA OBLIGATORIA: [Objeto] + [Breve detalle visual/forma] + [Material real]. (Ejemplo: "Aros de Argolla con Diseño de Mariposa en Acero Dorado").
+            1. ESTRUCTURA OBLIGATORIA: [Objeto] + [Marca (si es visible)] + [Breve detalle visual/forma] + [Material aparente]. (Ejemplo: "Aros de Argolla con Diseño de Mariposa en Acero Dorado").
             2. PROHIBICIÓN ABSOLUTA DE MARKETING Y POESÍA: NUNCA uses frases de venta en el título (PROHIBIDO "Elegancia y Suerte", "Joyería con Significado", "Brillo Único", etc.).
             3. PROHIBICIÓN DE SÍMBOLOS: NUNCA uses los separadores "|" o "-" en el título.
-            4. REGLA DE MATERIALES FALSOS: NUNCA asumas que un producto es de Oro, Plata o Diamantes. Asume SIEMPRE: Acero Quirúrgico, Metal, Aleación, Baño Dorado, Color Dorado, Color Plateado o Cristales. Si el objeto es de color plata, descríbelo como "Color Plata", "Plateado" o "Acero". NO pongas "Plata".
+            4. REGLA DE MATERIALES: NUNCA asumas que un producto es de Oro, Plata o Diamantes a menos que haya un sello muy claro que lo indique. Asume SIEMPRE: Acero Quirúrgico, Metal, Aleación, Baño Dorado, Color Dorado, Plateado, Color Plata o Cristales. PROHIBIDO usar la palabra "Plata" suelta para referirse al color.
 
             REGLAS PARA LA DESCRIPCIÓN Y ETIQUETAS:
             1. PÁRRAFO TÉCNICO: Primero, realiza una descripción técnica intensiva. Detalla la forma, partes, colores, texturas, tipo de cadena, tipo de eslabón, tamaño de dije. INCLUYE MEDIDAS OBLIGATORIAMENTE (ej. "Medidas aproximadas:    cm").
@@ -56,7 +57,7 @@ export default async function handler(req, res) {
         const payload = {
             system_instruction: {
                 parts: [
-                    { text: systemInstructionText } // <- Aquí estaba el error, faltaban los corchetes []
+                    { text: systemInstructionText }
                 ]
             },
             contents: [
