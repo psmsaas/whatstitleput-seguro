@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsTitlePut - Tu asesor de ventas de confianza</title>
+    <title>WhatsTitlePut - Tu consultos de ventas de confianza</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -11,9 +11,9 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#9333ea', // Purple 600
-                        secondary: '#000000', // Black
-                        bg_chat: '#ffffff', // White
+                        primary: '#9333ea', // Púrpura
+                        secondary: '#000000', // Negro
+                        bg_chat: '#ffffff', // Blanco
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
@@ -92,13 +92,39 @@
         .prose p { margin-bottom: 0.75em; }
         .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 0.75em; }
         .prose strong { font-weight: 600; color: #111827; }
+
+        /* Patrón de fondo minimalista con ícono de archivo y signo de interrogación en lila */
+        .bg-pattern {
+            background-color: #ffffff;
+            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z' stroke='%23e9d5ff' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M14 2V8H20' stroke='%23e9d5ff' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M12 16V16.01' stroke='%23e9d5ff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M12 13.5C12 12.5 13.5 12 13.5 10.5C13.5 9.3 12.5 8.5 11.5 8.5C10.5 8.5 9.5 9.2 9.5 10.5' stroke='%23e9d5ff' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-position: center top;
+        }
+
+        #history-sidebar {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        #history-sidebar.open {
+            transform: translateX(0);
+        }
     </style>
 </head>
-<body class="bg-white flex flex-col h-screen overflow-hidden text-black">
+<body class="bg-pattern flex flex-col h-screen overflow-hidden text-black">
 
-    <header class="bg-white z-10 p-5 border-b border-gray-200">
-        <div class="max-w-4xl mx-auto flex items-center justify-center">
+    <header class="bg-white/90 backdrop-blur-sm z-10 p-5 border-b border-gray-200 shadow-sm relative">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
             <h1 class="text-2xl font-bold tracking-tighter">WhatsTitlePut<span class="text-primary">.</span></h1>
+            
+            <div class="flex items-center gap-3">
+                <button id="history-btn" class="hidden text-sm font-medium bg-black text-white hover:bg-gray-800 rounded-lg px-4 py-2 transition-colors items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left"></i> <span class="hidden sm:inline">Historial</span>
+                </button>
+                <button id="auth-btn" class="text-sm font-medium border border-gray-300 hover:border-primary hover:text-primary rounded-lg px-4 py-2 transition-colors flex items-center gap-2 bg-white">
+                    <i class="fa-brands fa-google"></i> <span id="auth-text" class="hidden sm:inline">Iniciar Sesión</span>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -111,22 +137,22 @@
                     AI
                 </div>
                 <div>
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 text-black">
+                    <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-gray-200 text-black shadow-sm">
                         <p class="mb-2">Hola. Sube una imagen y generaré un título SEO optimizado.</p>
-                        <p class="text-xs text-gray-500 mt-2">Adaptaré el vocabulario a tu región (Ej: Argentina).</p>
+                        <p class="text-xs text-gray-500 mt-2">Adaptaré el vocabulario a tu región automáticamente.</p>
                     </div>
                 </div>
             </div>
             
         </div>
 
-        <div class="mt-auto bg-white border-t border-gray-100 pt-4 pb-2 relative transition-all duration-300" id="drop-zone">
+        <div class="mt-auto bg-white/90 backdrop-blur-md border-t border-gray-100 pt-4 pb-2 relative transition-all duration-300 rounded-t-xl" id="drop-zone">
             
-            <div class="flex items-center justify-between w-full relative gap-3">
+            <div class="flex items-center justify-between w-full relative gap-3 px-2">
                 
                 <input type="file" id="file-upload" class="hidden" accept="image/*">
                 
-                <div id="upload-trigger" class="flex-1 flex items-center cursor-pointer p-4 border border-dashed border-gray-300 rounded-lg hover:border-primary transition-colors bg-white">
+                <div id="upload-trigger" class="flex-1 flex items-center cursor-pointer p-4 border border-dashed border-gray-300 rounded-lg hover:border-primary transition-colors bg-white shadow-sm">
                     <i class="fa-solid fa-plus text-gray-400 mr-3"></i>
                     <div class="flex-1">
                         <p class="text-sm font-medium text-gray-700">Seleccionar o arrastrar imagen</p>
@@ -134,20 +160,58 @@
                     <span id="file-name-display" class="text-sm text-primary font-medium hidden max-w-[150px] truncate ml-2"></span>
                 </div>
 
-                <button id="send-btn" class="bg-primary hover:opacity-90 text-black rounded-lg px-6 py-4 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <button id="send-btn" class="bg-primary hover:opacity-90 text-black rounded-lg px-6 py-4 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" disabled>
                     <span class="font-medium">Generar</span>
                 </button>
             </div>
             
-            <div id="drag-overlay" class="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-lg border-2 border-primary border-dashed flex-col items-center justify-center hidden z-20 mt-4">
+            <div id="drag-overlay" class="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-lg border-2 border-primary border-dashed flex-col items-center justify-center hidden z-20 mt-4">
                 <i class="fa-solid fa-arrow-down text-3xl text-primary mb-2"></i>
                 <p class="font-bold text-primary">Suelta tu imagen aquí</p>
             </div>
         </div>
-        
+    
     </main>
 
-    <script>
+    <!-- Sidebar del Historial -->
+    <div id="history-sidebar" class="fixed inset-y-0 right-0 w-full sm:w-96 bg-white border-l border-gray-200 shadow-2xl z-50 flex flex-col">
+        <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+            <h2 class="text-lg font-bold"><i class="fa-solid fa-clock-rotate-left mr-2 text-primary"></i>Tu Historial</h2>
+            <button id="close-history" class="text-gray-500 hover:text-black p-2 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div id="history-content" class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-gray-50/50">
+            <p class="text-gray-500 text-sm text-center mt-10">Cargando historial...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // CONFIGURACIÓN DE FIREBASE
+        // NOTA: Para que el login funcione en tu Vercel público, debes crear un proyecto en Firebase,
+        // habilitar Autenticación de Google y Firestore, y poner tus credenciales reales aquí abajo.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'whatstitleput-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyAwcc7FczgBZYshzdSn0eFdH8m95Iwk5So",
+            authDomain: "whatstitleput.firebaseapp.com" ,
+            projectId: "whatstitleput" ,
+            storageBucket: "whatstitleput.firebasestorage.app" ,
+            messagingSenderId: "984686125650" ,
+            appId: "1:984686125650:web:6ee834cfbca51c88a5b58b"
+        };
+
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) {
+            console.warn("Firebase no está configurado. El historial no se guardará en producción.");
+        }
+
+        // DOM Elements
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-upload');
         const uploadTrigger = document.getElementById('upload-trigger');
@@ -155,22 +219,111 @@
         const sendBtn = document.getElementById('send-btn');
         const chatMessages = document.getElementById('chat-messages');
         const dragOverlay = document.getElementById('drag-overlay');
+        const authBtn = document.getElementById('auth-btn');
+        const authText = document.getElementById('auth-text');
+        const historyBtn = document.getElementById('history-btn');
+        const historySidebar = document.getElementById('history-sidebar');
+        const closeHistoryBtn = document.getElementById('close-history');
+        const historyContent = document.getElementById('history-content');
 
         let selectedFile = null;
         let base64ImageData = null;
+        let currentUser = null;
 
         const BACKEND_URL = '/api/generate';
-
-        // Obtener la zona horaria del usuario para el idioma
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        uploadTrigger.addEventListener('click', () => {
-            fileInput.click();
+        // Gestión de Sesión (Auth)
+        if (auth) {
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if (user) {
+                    authText.textContent = "Cerrar Sesión";
+                    historyBtn.classList.remove('hidden');
+                    historyBtn.classList.add('flex');
+                } else {
+                    authText.textContent = "Iniciar Sesión";
+                    historyBtn.classList.add('hidden');
+                    historyBtn.classList.remove('flex');
+                    historySidebar.classList.remove('open');
+                }
+            });
+
+            authBtn.addEventListener('click', async () => {
+                if (currentUser) {
+                    await signOut(auth);
+                } else {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            const provider = new GoogleAuthProvider();
+                            await signInWithPopup(auth, provider);
+                        }
+                    } catch (error) {
+                        console.error("Error al iniciar sesión:", error);
+                        addMessageToChat('Error', 'Hubo un error al conectar con Google. Revisa tu configuración de Firebase en producción.');
+                    }
+                }
+            });
+        }
+
+        // Controles del Historial
+        historyBtn.addEventListener('click', () => {
+            historySidebar.classList.add('open');
+            loadHistory();
         });
 
-        fileInput.addEventListener('change', (e) => {
-            handleFiles(e.target.files);
+        closeHistoryBtn.addEventListener('click', () => {
+            historySidebar.classList.remove('open');
         });
+
+        async function loadHistory() {
+            if (!currentUser || !db) return;
+            historyContent.innerHTML = '<p class="text-gray-500 text-sm text-center mt-10"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Cargando...</p>';
+            
+            try {
+                const q = query(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'history'));
+                const snapshot = await getDocs(q);
+                
+                let items = [];
+                snapshot.forEach(doc => items.push(doc.data()));
+                
+                items.sort((a, b) => b.timestamp - a.timestamp); // Del más nuevo al más viejo
+
+                if (items.length === 0) {
+                    historyContent.innerHTML = '<p class="text-gray-500 text-sm text-center mt-10">Tu historial está vacío.</p>';
+                    return;
+                }
+
+                historyContent.innerHTML = '';
+                items.forEach(item => {
+                    const date = new Date(item.timestamp).toLocaleDateString();
+                    const card = `
+                        <div class="border border-gray-200 rounded-xl p-4 bg-white shadow-sm hover:shadow transition-shadow">
+                            <div class="flex gap-4 mb-3 items-center border-b border-gray-100 pb-3">
+                                <img src="data:image/jpeg;base64,${item.imageBase64}" class="w-16 h-16 object-cover rounded-lg border border-gray-200 shadow-sm">
+                                <div class="flex-1 text-xs text-gray-500 flex flex-col justify-center">
+                                    <span class="font-bold text-black mb-1">Generado el:</span>
+                                    <span class="bg-gray-100 px-2 py-1 rounded w-fit">${date}</span>
+                                </div>
+                            </div>
+                            <div class="prose prose-sm text-sm max-h-40 overflow-y-auto pr-2 custom-scroll">
+                                ${item.text}
+                            </div>
+                        </div>
+                    `;
+                    historyContent.insertAdjacentHTML('beforeend', card);
+                });
+            } catch (error) {
+                console.error("Error cargando historial", error);
+                historyContent.innerHTML = '<p class="text-red-500 text-sm text-center mt-10">Error al cargar el historial.</p>';
+            }
+        }
+
+        // Subida y Compresión de archivos
+        uploadTrigger.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
         
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, preventDefaults, false);
@@ -198,20 +351,14 @@
             }, false);
         });
 
-        dropZone.addEventListener('drop', (e) => {
-            let dt = e.dataTransfer;
-            let files = dt.files;
-            handleFiles(files);
-        }, false);
+        dropZone.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files), false);
 
-
+        // COMPRESIÓN DE IMAGEN (Mejora la velocidad de respuesta)
         function handleFiles(files) {
             if (files.length === 0) return;
-            
             const file = files[0];
-            
             if (!file.type.startsWith('image/')) {
-                addMessageToChat('Error', 'Por favor, sube un archivo de imagen válido (JPG, PNG, WebP).');
+                addMessageToChat('Error', 'Sube un archivo de imagen válido (JPG, PNG).');
                 return;
             }
 
@@ -220,26 +367,39 @@
             
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = function () {
-                base64ImageData = reader.result.split(',')[1];
-            };
-            reader.onerror = function (error) {
-                console.error('Error reading file:', error);
-                addMessageToChat('Error', 'Hubo un error al procesar la imagen.');
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    // Reducimos el ancho máximo para acelerar drásticamente el envío y procesado
+                    const MAX_WIDTH = 800; 
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > MAX_WIDTH) {
+                        height = Math.round((height * MAX_WIDTH) / width);
+                        width = MAX_WIDTH;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Comprimir a JPEG calidad 80%
+                    base64ImageData = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+                };
             };
         }
 
         function updateUIWithFile(file) {
             let name = file.name;
-            if(name.length > 20) {
-                name = name.substring(0, 10) + '...' + name.substring(name.length - 6);
-            }
-            
-            uploadTrigger.querySelector('p:first-of-type').textContent = "Imagen seleccionada";
+            if(name.length > 20) name = name.substring(0, 10) + '...' + name.substring(name.length - 6);
+            uploadTrigger.querySelector('p:first-of-type').textContent = "Imagen lista (Optimizada)";
             fileNameDisplay.textContent = name;
             fileNameDisplay.classList.remove('hidden');
             fileNameDisplay.classList.add('block');
-            
             sendBtn.disabled = false;
             sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
@@ -256,21 +416,21 @@
             sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
         }
 
+        // Envío de la imagen al Backend
         sendBtn.addEventListener('click', async () => {
             if (!selectedFile || !base64ImageData) return;
 
             const imageUrl = URL.createObjectURL(selectedFile);
             addUserMessageWithImage(imageUrl);
 
-            // Ahora enviamos también la zona horaria
             const payload = {
                 base64ImageData: base64ImageData,
-                mimeType: selectedFile.type,
-                userTimeZone: userTimeZone 
+                mimeType: 'image/jpeg',
+                userTimeZone: userTimeZone // Enviamos la zona horaria para adaptar el vocabulario
             };
 
+            const imageToSave = base64ImageData; 
             resetInputArea();
-
             const typingId = showTypingIndicator();
             scrollToBottom();
 
@@ -281,25 +441,34 @@
                     body: JSON.stringify(payload)
                 });
 
-                if (!response.ok) {
-                    throw new Error(`Server Error: ${response.status}`);
-                }
-
+                if (!response.ok) throw new Error(`Error: ${response.status}`);
                 const result = await response.json();
-                
                 removeMessage(typingId);
 
                 if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts) {
                     const generatedText = result.candidates[0].content.parts[0].text;
                     addMessageToChat('IA', generatedText, true);
-                } else {
-                    throw new Error("Formato de respuesta inesperado");
-                }
 
+                    // Guardar en el Historial si está logueado
+                    if (currentUser && db) {
+                        try {
+                            await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'history'), {
+                                imageBase64: imageToSave,
+                                text: generatedText,
+                                timestamp: Date.now()
+                            });
+                        } catch (err) {
+                            console.error("No se pudo guardar el historial", err);
+                        }
+                    }
+
+                } else {
+                    throw new Error("Formato inválido");
+                }
             } catch (error) {
-                console.error("Error calling backend:", error);
+                console.error("Error backend:", error);
                 removeMessage(typingId);
-                addMessageToChat('Error', 'Lo siento, ocurrió un error al analizar la imagen. Inténtalo de nuevo.');
+                addMessageToChat('Error', 'Lo siento, ocurrió un error al analizar la imagen.');
             }
         });
 
@@ -308,7 +477,7 @@
             <div class="flex w-full mt-4 space-x-4 max-w-2xl ml-auto justify-end message-out">
                 <div>
                     <div class="bg-white border border-gray-200 p-2 rounded-xl text-black shadow-sm">
-                        <img src="${imageUrl}" alt="Imagen subida" class="max-w-[200px] sm:max-w-[300px] rounded-lg object-contain">
+                        <img src="${imageUrl}" class="max-w-[200px] sm:max-w-[300px] rounded-lg object-contain">
                     </div>
                 </div>
                 <div class="flex-shrink-0 h-10 w-10 rounded-full bg-white border border-gray-300 flex items-center justify-center text-black text-sm font-medium shadow-sm">
@@ -322,7 +491,6 @@
         function addMessageToChat(sender, text, isHtml = false) {
             const isUser = sender !== "IA" && sender !== "Error";
             const isError = sender === "Error";
-            
             let content = isHtml ? text : `<p>${text}</p>`;
 
             const msgHtml = `
@@ -330,23 +498,19 @@
                 ${!isUser ? `
                 <div class="flex-shrink-0 h-10 w-10 rounded-full ${isError ? 'bg-red-500 text-white' : 'bg-black text-white'} flex items-center justify-center font-bold text-sm shadow-sm">
                     ${isError ? '!' : 'AI'}
-                </div>
-                ` : ''}
+                </div>` : ''}
                 
                 <div class="${isUser ? 'order-first mr-4' : ''}">
-                    <div class="${isUser ? 'bg-white border border-gray-200' : (isError ? 'bg-white border border-red-200 text-red-600' : 'bg-gray-50 border border-gray-200 text-black')} p-4 rounded-xl shadow-sm">
+                    <div class="${isUser ? 'bg-white border border-gray-200' : (isError ? 'bg-white border border-red-200 text-red-600' : 'bg-white/90 backdrop-blur-sm border border-gray-200 text-black')} p-5 rounded-xl shadow-sm">
                         <div class="prose prose-sm">${content}</div>
-                        ${!isUser && !isError ? `<button onclick="copyToClipboard(this)" class="mt-3 text-xs flex items-center text-gray-500 hover:text-primary transition-colors font-medium border border-gray-200 rounded px-2 py-1 bg-white" title="Copiar texto"><i class="fa-regular fa-copy mr-1"></i> Copiar</button>` : ''}
+                        ${!isUser && !isError ? `<button onclick="copyToClipboard(this)" class="mt-4 text-xs flex items-center text-gray-600 hover:text-primary transition-colors font-semibold border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 hover:bg-white"><i class="fa-regular fa-copy mr-2"></i> Copiar Resultado</button>` : ''}
                     </div>
                 </div>
-
                 ${isUser ? `
                 <div class="flex-shrink-0 h-10 w-10 rounded-full bg-white border border-gray-300 flex items-center justify-center text-black text-sm font-medium shadow-sm">
                     Tú
-                </div>
-                ` : ''}
+                </div>` : ''}
             </div>`;
-
             chatMessages.insertAdjacentHTML('beforeend', msgHtml);
             scrollToBottom();
         }
@@ -355,16 +519,8 @@
             const id = 'typing-' + Date.now();
             const msgHtml = `
             <div id="${id}" class="flex w-full mt-4 space-x-4 max-w-2xl message-in">
-                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-black flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                    AI
-                </div>
-                <div>
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center h-[54px] shadow-sm">
-                        <div class="typing-indicator flex">
-                            <span class="bg-primary"></span><span class="bg-primary"></span><span class="bg-primary"></span>
-                        </div>
-                    </div>
-                </div>
+                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-black flex items-center justify-center text-white font-bold text-sm shadow-sm">AI</div>
+                <div><div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-gray-200 flex items-center h-[54px] shadow-sm"><div class="typing-indicator flex"><span class="bg-primary"></span><span class="bg-primary"></span><span class="bg-primary"></span></div></div></div>
             </div>`;
             chatMessages.insertAdjacentHTML('beforeend', msgHtml);
             return id;
@@ -379,32 +535,30 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
+        // Función global para copiar el texto HTML generado
         window.copyToClipboard = function(buttonElement) {
             const proseContainer = buttonElement.previousElementSibling;
             const tempTextArea = document.createElement('textarea');
-            // Remove HTML tags for clean copy
+            // Extraer el texto limpio sin etiquetas HTML para copiar
             tempTextArea.value = proseContainer.innerText; 
             document.body.appendChild(tempTextArea);
             tempTextArea.select();
             
             try {
-                const successful = document.execCommand('copy');
-                if(successful) {
+                if(document.execCommand('copy')) {
                     const originalHtml = buttonElement.innerHTML;
-                    buttonElement.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Copiado`;
-                    buttonElement.classList.add('text-primary', 'border-primary');
+                    buttonElement.innerHTML = `<i class="fa-solid fa-check mr-2"></i> ¡Copiado!`;
+                    buttonElement.classList.add('text-primary', 'border-primary', 'bg-white');
                     setTimeout(() => {
                         buttonElement.innerHTML = originalHtml;
-                        buttonElement.classList.remove('text-primary', 'border-primary');
+                        buttonElement.classList.remove('text-primary', 'border-primary', 'bg-white');
                     }, 2000);
                 }
             } catch (err) {
-                console.error('Failed to copy text: ', err);
+                console.error('Error al copiar: ', err);
             }
-            
             document.body.removeChild(tempTextArea);
         }
-
     </script>
 </body>
 </html>
