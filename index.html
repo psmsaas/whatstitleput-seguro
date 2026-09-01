@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsTitlePut - Tu consultos de ventas de confianza</title>
+    <title>WhatsTitlePut - Tu consultor de confianza</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -131,11 +131,8 @@
     <main class="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col relative chat-container">
         
         <div id="chat-messages" class="flex-1 overflow-y-auto chat-scroll flex flex-col space-y-6 pb-4 px-2">
-            
             <div class="flex w-full mt-4 space-x-4 max-w-2xl">
-                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-black flex items-center justify-center text-white font-bold text-sm">
-                    AI
-                </div>
+                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-black flex items-center justify-center text-white font-bold text-sm">AI</div>
                 <div>
                     <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-gray-200 text-black shadow-sm">
                         <p class="mb-2">Hola. Sube una imagen y generaré un título SEO optimizado.</p>
@@ -143,21 +140,26 @@
                     </div>
                 </div>
             </div>
-            
         </div>
 
         <div class="mt-auto bg-white/90 backdrop-blur-md border-t border-gray-100 pt-4 pb-2 relative transition-all duration-300 rounded-t-xl" id="drop-zone">
             
             <div class="flex items-center justify-between w-full relative gap-3 px-2">
-                
                 <input type="file" id="file-upload" class="hidden" accept="image/*">
                 
-                <div id="upload-trigger" class="flex-1 flex items-center cursor-pointer p-4 border border-dashed border-gray-300 rounded-lg hover:border-primary transition-colors bg-white shadow-sm">
+                <div id="upload-trigger" class="flex-1 flex items-center cursor-pointer p-4 border border-dashed border-gray-300 rounded-lg hover:border-primary transition-colors bg-white shadow-sm overflow-hidden">
                     <i class="fa-solid fa-plus text-gray-400 mr-3"></i>
-                    <div class="flex-1">
-                        <p class="text-sm font-medium text-gray-700">Seleccionar o arrastrar imagen</p>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-700 truncate">Seleccionar o arrastrar imagen</p>
                     </div>
-                    <span id="file-name-display" class="text-sm text-primary font-medium hidden max-w-[150px] truncate ml-2"></span>
+                    
+                    <!-- NUEVO: Contenedor para el nombre completo y el botón X -->
+                    <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+                        <span id="file-name-display" class="text-sm text-primary font-medium hidden max-w-full"></span>
+                        <button id="clear-file-btn" class="hidden text-gray-400 hover:text-red-500 transition-colors p-1" title="Borrar imagen">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <button id="send-btn" class="bg-primary hover:opacity-90 text-black rounded-lg px-6 py-4 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" disabled>
@@ -170,10 +172,8 @@
                 <p class="font-bold text-primary">Suelta tu imagen aquí</p>
             </div>
         </div>
-    
     </main>
 
-    <!-- Sidebar del Historial -->
     <div id="history-sidebar" class="fixed inset-y-0 right-0 w-full sm:w-96 bg-white border-l border-gray-200 shadow-2xl z-50 flex flex-col">
         <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
             <h2 class="text-lg font-bold"><i class="fa-solid fa-clock-rotate-left mr-2 text-primary"></i>Tu Historial</h2>
@@ -189,11 +189,12 @@
         import { getAuth, signInWithCustomToken, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CONFIGURACIÓN DE FIREBASE
-        // NOTA: Para que el login funcione en tu Vercel público, debes crear un proyecto en Firebase,
-        // habilitar Autenticación de Google y Firestore, y poner tus credenciales reales aquí abajo.
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'whatstitleput-app';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        const appId = 'whatstitleput-app';
+        
+        // ⚠️⚠️⚠️ ¡ATENCIÓN! ⚠️⚠️⚠️
+        // PEGA AQUÍ TU CONFIGURACIÓN REAL DE FIREBASE QUE YA TENÍAS. 
+        // SI DEJAS ESTO ASÍ, NO FUNCIONARÁ TU LOGIN.
+        const firebaseConfig = {
             apiKey: "AIzaSyAwcc7FczgBZYshzdSn0eFdH8m95Iwk5So",
             authDomain: "whatstitleput.firebaseapp.com" ,
             projectId: "whatstitleput" ,
@@ -208,14 +209,15 @@
             auth = getAuth(app);
             db = getFirestore(app);
         } catch (e) {
-            console.warn("Firebase no está configurado. El historial no se guardará en producción.");
+            console.warn("Firebase no está configurado correctamente.", e);
         }
 
-        // DOM Elements
+        // Elementos del DOM
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-upload');
         const uploadTrigger = document.getElementById('upload-trigger');
         const fileNameDisplay = document.getElementById('file-name-display');
+        const clearFileBtn = document.getElementById('clear-file-btn'); // NUEVO BOTÓN
         const sendBtn = document.getElementById('send-btn');
         const chatMessages = document.getElementById('chat-messages');
         const dragOverlay = document.getElementById('drag-overlay');
@@ -233,7 +235,6 @@
         const BACKEND_URL = '/api/generate';
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        // Gestión de Sesión (Auth)
         if (auth) {
             onAuthStateChanged(auth, (user) => {
                 currentUser = user;
@@ -254,21 +255,16 @@
                     await signOut(auth);
                 } else {
                     try {
-                        if (typeof __initial_auth_token !== 'undefined') {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            const provider = new GoogleAuthProvider();
-                            await signInWithPopup(auth, provider);
-                        }
+                        const provider = new GoogleAuthProvider();
+                        await signInWithPopup(auth, provider);
                     } catch (error) {
                         console.error("Error al iniciar sesión:", error);
-                        addMessageToChat('Error', 'Hubo un error al conectar con Google. Revisa tu configuración de Firebase en producción.');
+                        addMessageToChat('Error', 'Hubo un error al conectar con Google.');
                     }
                 }
             });
         }
 
-        // Controles del Historial
         historyBtn.addEventListener('click', () => {
             historySidebar.classList.add('open');
             loadHistory();
@@ -289,7 +285,7 @@
                 let items = [];
                 snapshot.forEach(doc => items.push(doc.data()));
                 
-                items.sort((a, b) => b.timestamp - a.timestamp); // Del más nuevo al más viejo
+                items.sort((a, b) => b.timestamp - a.timestamp);
 
                 if (items.length === 0) {
                     historyContent.innerHTML = '<p class="text-gray-500 text-sm text-center mt-10">Tu historial está vacío.</p>';
@@ -316,24 +312,20 @@
                     historyContent.insertAdjacentHTML('beforeend', card);
                 });
             } catch (error) {
-                console.error("Error cargando historial", error);
                 historyContent.innerHTML = '<p class="text-red-500 text-sm text-center mt-10">Error al cargar el historial.</p>';
             }
         }
 
-        // Subida y Compresión de archivos
         uploadTrigger.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        clearFileBtn.addEventListener('click', resetInputArea); // Evento para el botón X
         
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, preventDefaults, false);
             document.body.addEventListener(eventName, preventDefaults, false);
         });
 
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
 
         ['dragenter', 'dragover'].forEach(eventName => {
             dropZone.addEventListener(eventName, () => {
@@ -353,7 +345,6 @@
 
         dropZone.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files), false);
 
-        // COMPRESIÓN DE IMAGEN (Mejora la velocidad de respuesta)
         function handleFiles(files) {
             if (files.length === 0) return;
             const file = files[0];
@@ -372,51 +363,44 @@
                 img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    // Reducimos el ancho máximo para acelerar drásticamente el envío y procesado
                     const MAX_WIDTH = 800; 
                     let width = img.width;
                     let height = img.height;
-                    
-                    if (width > MAX_WIDTH) {
-                        height = Math.round((height * MAX_WIDTH) / width);
-                        width = MAX_WIDTH;
-                    }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
+                    if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+                    canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Comprimir a JPEG calidad 80%
                     base64ImageData = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
                 };
             };
         }
 
         function updateUIWithFile(file) {
-            let name = file.name;
-            if(name.length > 20) name = name.substring(0, 10) + '...' + name.substring(name.length - 6);
             uploadTrigger.querySelector('p:first-of-type').textContent = "Imagen lista (Optimizada)";
-            fileNameDisplay.textContent = name;
+            fileNameDisplay.textContent = file.name; // Nombre completo
             fileNameDisplay.classList.remove('hidden');
-            fileNameDisplay.classList.add('block');
+            fileNameDisplay.classList.add('inline-block');
+            clearFileBtn.classList.remove('hidden'); // Mostrar botón X
+            clearFileBtn.classList.add('flex');
             sendBtn.disabled = false;
             sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
-        function resetInputArea() {
+        function resetInputArea(e) {
+            if (e) e.stopPropagation(); // Evitar que se abra la ventana de selección al pulsar la X
             selectedFile = null;
             base64ImageData = null;
             fileInput.value = '';
             uploadTrigger.querySelector('p:first-of-type').textContent = "Seleccionar o arrastrar imagen";
             fileNameDisplay.textContent = "";
             fileNameDisplay.classList.add('hidden');
-            fileNameDisplay.classList.remove('block');
+            fileNameDisplay.classList.remove('inline-block');
+            clearFileBtn.classList.add('hidden'); // Ocultar botón X
+            clearFileBtn.classList.remove('flex');
             sendBtn.disabled = true;
             sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
         }
 
-        // Envío de la imagen al Backend
         sendBtn.addEventListener('click', async () => {
             if (!selectedFile || !base64ImageData) return;
 
@@ -426,11 +410,11 @@
             const payload = {
                 base64ImageData: base64ImageData,
                 mimeType: 'image/jpeg',
-                userTimeZone: userTimeZone // Enviamos la zona horaria para adaptar el vocabulario
+                userTimeZone: userTimeZone 
             };
 
             const imageToSave = base64ImageData; 
-            resetInputArea();
+            resetInputArea(); // Limpiamos la caja de input
             const typingId = showTypingIndicator();
             scrollToBottom();
 
@@ -449,7 +433,6 @@
                     const generatedText = result.candidates[0].content.parts[0].text;
                     addMessageToChat('IA', generatedText, true);
 
-                    // Guardar en el Historial si está logueado
                     if (currentUser && db) {
                         try {
                             await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'history'), {
@@ -475,14 +458,8 @@
         function addUserMessageWithImage(imageUrl) {
             const msgHtml = `
             <div class="flex w-full mt-4 space-x-4 max-w-2xl ml-auto justify-end message-out">
-                <div>
-                    <div class="bg-white border border-gray-200 p-2 rounded-xl text-black shadow-sm">
-                        <img src="${imageUrl}" class="max-w-[200px] sm:max-w-[300px] rounded-lg object-contain">
-                    </div>
-                </div>
-                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-white border border-gray-300 flex items-center justify-center text-black text-sm font-medium shadow-sm">
-                    Tú
-                </div>
+                <div><div class="bg-white border border-gray-200 p-2 rounded-xl text-black shadow-sm"><img src="${imageUrl}" class="max-w-[200px] sm:max-w-[300px] rounded-lg object-contain"></div></div>
+                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-white border border-gray-300 flex items-center justify-center text-black text-sm font-medium shadow-sm">Tú</div>
             </div>`;
             chatMessages.insertAdjacentHTML('beforeend', msgHtml);
             scrollToBottom();
@@ -492,24 +469,16 @@
             const isUser = sender !== "IA" && sender !== "Error";
             const isError = sender === "Error";
             let content = isHtml ? text : `<p>${text}</p>`;
-
             const msgHtml = `
             <div class="flex w-full mt-4 space-x-4 max-w-2xl ${isUser ? 'ml-auto justify-end message-out' : 'message-in'}">
-                ${!isUser ? `
-                <div class="flex-shrink-0 h-10 w-10 rounded-full ${isError ? 'bg-red-500 text-white' : 'bg-black text-white'} flex items-center justify-center font-bold text-sm shadow-sm">
-                    ${isError ? '!' : 'AI'}
-                </div>` : ''}
-                
+                ${!isUser ? `<div class="flex-shrink-0 h-10 w-10 rounded-full ${isError ? 'bg-red-500 text-white' : 'bg-black text-white'} flex items-center justify-center font-bold text-sm shadow-sm">${isError ? '!' : 'AI'}</div>` : ''}
                 <div class="${isUser ? 'order-first mr-4' : ''}">
                     <div class="${isUser ? 'bg-white border border-gray-200' : (isError ? 'bg-white border border-red-200 text-red-600' : 'bg-white/90 backdrop-blur-sm border border-gray-200 text-black')} p-5 rounded-xl shadow-sm">
                         <div class="prose prose-sm">${content}</div>
                         ${!isUser && !isError ? `<button onclick="copyToClipboard(this)" class="mt-4 text-xs flex items-center text-gray-600 hover:text-primary transition-colors font-semibold border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 hover:bg-white"><i class="fa-regular fa-copy mr-2"></i> Copiar Resultado</button>` : ''}
                     </div>
                 </div>
-                ${isUser ? `
-                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-white border border-gray-300 flex items-center justify-center text-black text-sm font-medium shadow-sm">
-                    Tú
-                </div>` : ''}
+                ${isUser ? `<div class="flex-shrink-0 h-10 w-10 rounded-full bg-white border border-gray-300 flex items-center justify-center text-black text-sm font-medium shadow-sm">Tú</div>` : ''}
             </div>`;
             chatMessages.insertAdjacentHTML('beforeend', msgHtml);
             scrollToBottom();
@@ -526,24 +495,15 @@
             return id;
         }
 
-        function removeMessage(id) {
-            const el = document.getElementById(id);
-            if (el) el.remove();
-        }
+        function removeMessage(id) { const el = document.getElementById(id); if (el) el.remove(); }
+        function scrollToBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
 
-        function scrollToBottom() {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        // Función global para copiar el texto HTML generado
         window.copyToClipboard = function(buttonElement) {
             const proseContainer = buttonElement.previousElementSibling;
             const tempTextArea = document.createElement('textarea');
-            // Extraer el texto limpio sin etiquetas HTML para copiar
             tempTextArea.value = proseContainer.innerText; 
             document.body.appendChild(tempTextArea);
             tempTextArea.select();
-            
             try {
                 if(document.execCommand('copy')) {
                     const originalHtml = buttonElement.innerHTML;
@@ -554,9 +514,7 @@
                         buttonElement.classList.remove('text-primary', 'border-primary', 'bg-white');
                     }, 2000);
                 }
-            } catch (err) {
-                console.error('Error al copiar: ', err);
-            }
+            } catch (err) {}
             document.body.removeChild(tempTextArea);
         }
     </script>
