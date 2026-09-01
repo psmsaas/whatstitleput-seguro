@@ -135,8 +135,8 @@
                 <div class="flex-shrink-0 h-10 w-10 rounded-full bg-black flex items-center justify-center text-white font-bold text-sm">AI</div>
                 <div>
                     <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-gray-200 text-black shadow-sm">
-                        <p class="mb-2">Hola. Sube una imagen y generaré un título SEO optimizado.</p>
-                        <p class="text-xs text-gray-500 mt-2">Adaptaré el vocabulario a tu región automáticamente.</p>
+                        <p class="mb-2">Hola. Sube una imagen y generaré texto SEO optimizado.</p>
+                        <p class="text-xs text-gray-500 mt-2">Elige el modo (E-commerce o Red Social) antes de generar.</p>
                     </div>
                 </div>
             </div>
@@ -144,6 +144,12 @@
 
         <div class="mt-auto bg-white/90 backdrop-blur-md border-t border-gray-100 pt-4 pb-2 relative transition-all duration-300 rounded-t-xl" id="drop-zone">
             
+            <!-- Botones de Modo Sutiles -->
+            <div class="flex justify-center gap-4 mb-3 px-2">
+                <button id="mode-ecommerce" class="text-xs font-semibold px-4 py-1.5 rounded-full bg-primary text-white transition-colors shadow-sm ring-2 ring-primary ring-offset-1">E-commerce (Google SEO)</button>
+                <button id="mode-social" class="text-xs font-semibold px-4 py-1.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors border border-transparent">Red Social (Instagram/TikTok)</button>
+            </div>
+
             <div class="flex items-center justify-between w-full relative gap-3 px-2">
                 <input type="file" id="file-upload" class="hidden" accept="image/*">
                 
@@ -153,16 +159,16 @@
                         <p class="text-sm font-medium text-gray-700 truncate">Seleccionar o arrastrar imagen</p>
                     </div>
                     
-                    <!-- NUEVO: Contenedor para el nombre completo y el botón X -->
-                    <div class="flex items-center gap-2 flex-shrink-0 ml-2">
-                        <span id="file-name-display" class="text-sm text-primary font-medium hidden max-w-full"></span>
+                    <!-- Contenedor para el nombre completo y el botón X -->
+                    <div class="flex items-center gap-2 flex-shrink-0 ml-2 overflow-hidden">
+                        <span id="file-name-display" class="text-sm text-primary font-medium hidden truncate max-w-[200px] sm:max-w-[400px]" title=""></span>
                         <button id="clear-file-btn" class="hidden text-gray-400 hover:text-red-500 transition-colors p-1" title="Borrar imagen">
                             <i class="fa-solid fa-xmark text-lg"></i>
                         </button>
                     </div>
                 </div>
 
-                <button id="send-btn" class="bg-primary hover:opacity-90 text-black rounded-lg px-6 py-4 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" disabled>
+                <button id="send-btn" class="bg-primary hover:opacity-90 text-white rounded-lg px-6 py-4 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" disabled>
                     <span class="font-medium">Generar</span>
                 </button>
             </div>
@@ -192,8 +198,7 @@
         const appId = 'whatstitleput-app';
         
         // ⚠️⚠️⚠️ ¡ATENCIÓN! ⚠️⚠️⚠️
-        // PEGA AQUÍ TU CONFIGURACIÓN REAL DE FIREBASE QUE YA TENÍAS. 
-        // SI DEJAS ESTO ASÍ, NO FUNCIONARÁ TU LOGIN.
+        // PEGA AQUÍ TU CONFIGURACIÓN REAL DE FIREBASE. 
         const firebaseConfig = {
             apiKey: "AIzaSyAwcc7FczgBZYshzdSn0eFdH8m95Iwk5So",
             authDomain: "whatstitleput.firebaseapp.com" ,
@@ -217,7 +222,7 @@
         const fileInput = document.getElementById('file-upload');
         const uploadTrigger = document.getElementById('upload-trigger');
         const fileNameDisplay = document.getElementById('file-name-display');
-        const clearFileBtn = document.getElementById('clear-file-btn'); // NUEVO BOTÓN
+        const clearFileBtn = document.getElementById('clear-file-btn');
         const sendBtn = document.getElementById('send-btn');
         const chatMessages = document.getElementById('chat-messages');
         const dragOverlay = document.getElementById('drag-overlay');
@@ -227,10 +232,26 @@
         const historySidebar = document.getElementById('history-sidebar');
         const closeHistoryBtn = document.getElementById('close-history');
         const historyContent = document.getElementById('history-content');
+        
+        const modeEcommerceBtn = document.getElementById('mode-ecommerce');
+        const modeSocialBtn = document.getElementById('mode-social');
 
         let selectedFile = null;
         let base64ImageData = null;
         let currentUser = null;
+        let currentMode = 'ecommerce'; 
+
+        modeEcommerceBtn.addEventListener('click', () => {
+            currentMode = 'ecommerce';
+            modeEcommerceBtn.className = "text-xs font-semibold px-4 py-1.5 rounded-full bg-primary text-white transition-colors shadow-sm ring-2 ring-primary ring-offset-1";
+            modeSocialBtn.className = "text-xs font-semibold px-4 py-1.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors border border-transparent";
+        });
+
+        modeSocialBtn.addEventListener('click', () => {
+            currentMode = 'social';
+            modeSocialBtn.className = "text-xs font-semibold px-4 py-1.5 rounded-full bg-primary text-white transition-colors shadow-sm ring-2 ring-primary ring-offset-1";
+            modeEcommerceBtn.className = "text-xs font-semibold px-4 py-1.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors border border-transparent";
+        });
 
         const BACKEND_URL = '/api/generate';
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -318,7 +339,7 @@
 
         uploadTrigger.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-        clearFileBtn.addEventListener('click', resetInputArea); // Evento para el botón X
+        clearFileBtn.addEventListener('click', resetInputArea); 
         
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, preventDefaults, false);
@@ -377,17 +398,18 @@
 
         function updateUIWithFile(file) {
             uploadTrigger.querySelector('p:first-of-type').textContent = "Imagen lista (Optimizada)";
-            fileNameDisplay.textContent = file.name; // Nombre completo
+            fileNameDisplay.textContent = file.name;
+            fileNameDisplay.title = file.name;
             fileNameDisplay.classList.remove('hidden');
             fileNameDisplay.classList.add('inline-block');
-            clearFileBtn.classList.remove('hidden'); // Mostrar botón X
+            clearFileBtn.classList.remove('hidden');
             clearFileBtn.classList.add('flex');
             sendBtn.disabled = false;
             sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
         function resetInputArea(e) {
-            if (e) e.stopPropagation(); // Evitar que se abra la ventana de selección al pulsar la X
+            if (e) e.stopPropagation(); 
             selectedFile = null;
             base64ImageData = null;
             fileInput.value = '';
@@ -395,7 +417,7 @@
             fileNameDisplay.textContent = "";
             fileNameDisplay.classList.add('hidden');
             fileNameDisplay.classList.remove('inline-block');
-            clearFileBtn.classList.add('hidden'); // Ocultar botón X
+            clearFileBtn.classList.add('hidden');
             clearFileBtn.classList.remove('flex');
             sendBtn.disabled = true;
             sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -410,11 +432,12 @@
             const payload = {
                 base64ImageData: base64ImageData,
                 mimeType: 'image/jpeg',
-                userTimeZone: userTimeZone 
+                userTimeZone: userTimeZone,
+                generationMode: currentMode 
             };
 
             const imageToSave = base64ImageData; 
-            resetInputArea(); // Limpiamos la caja de input
+            resetInputArea(); 
             const typingId = showTypingIndicator();
             scrollToBottom();
 
