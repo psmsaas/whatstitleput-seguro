@@ -5,8 +5,8 @@ export default async function handler(req, res) {
 
     try {
         const API_KEY = process.env.GEMINI_API_KEY;
-         // Modelo automatico y mas rapido de google
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash:generateContent?key=${API_KEY}`;
+         // Modelo mas rapido de google
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
         const { base64ImageData, mimeType, userTimeZone, generationMode } = req.body;
 
