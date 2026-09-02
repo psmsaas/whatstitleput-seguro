@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsTitlePut - Tu consultor de confianza</title>
+    <title>WhatsTitlePut</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -27,7 +27,12 @@
         
         body {
             font-family: 'Inter', sans-serif;
+            /* EL FONDO ES BLANCO POR DEFECTO. SI QUIERES UNA IMAGEN, CAMBIA LA URL DE ABAJO */
             background-color: #ffffff;
+            background-image: url('TU_FONDO_AQUI.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             color: #000000;
         }
 
@@ -93,14 +98,6 @@
         .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 0.75em; }
         .prose strong { font-weight: 600; color: #111827; }
 
-        /* Patrón de fondo minimalista con ícono de archivo y signo de interrogación en lila */
-        .bg-pattern {
-            background-color: #ffffff;
-            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z' stroke='%23e9d5ff' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M14 2V8H20' stroke='%23e9d5ff' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M12 16V16.01' stroke='%23e9d5ff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M12 13.5C12 12.5 13.5 12 13.5 10.5C13.5 9.3 12.5 8.5 11.5 8.5C10.5 8.5 9.5 9.2 9.5 10.5' stroke='%23e9d5ff' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-            background-repeat: repeat;
-            background-position: center top;
-        }
-
         #history-sidebar {
             transform: translateX(100%);
             transition: transform 0.3s ease-in-out;
@@ -111,18 +108,38 @@
         }
     </style>
 </head>
-<body class="bg-pattern flex flex-col h-screen overflow-hidden text-black">
+<body class="flex flex-col h-screen overflow-hidden text-black">
+
+    <!-- PANTALLA DE LOGIN OBLIGATORIO (Difuminado) -->
+    <div id="login-overlay" class="fixed inset-0 z-50 bg-white/60 backdrop-blur-md flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center border border-gray-100">
+            <!-- REEMPLAZA EL SRC CON TU LOGO CENTRAL DEL LOGIN -->
+            <img src="TU_LOGO_AQUI.png" alt="Logo" class="h-16 w-auto mx-auto mb-4 object-contain" onerror="this.style.display='none'">
+            <h2 class="text-2xl font-bold mb-2 tracking-tighter">WhatsTitlePut<span class="text-primary">.</span></h2>
+            <p class="text-gray-500 mb-6 text-sm">Inicia sesión con tu cuenta para comenzar a generar contenido optimizado.</p>
+            <button id="main-login-btn" class="w-full bg-black hover:bg-gray-800 text-white font-medium rounded-lg px-4 py-3 transition-colors flex items-center justify-center gap-3 shadow-md">
+                <i class="fa-brands fa-google text-lg"></i> Iniciar sesión con Google
+            </button>
+        </div>
+    </div>
 
     <header class="bg-white/90 backdrop-blur-sm z-10 p-5 border-b border-gray-200 shadow-sm relative">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
-            <h1 class="text-2xl font-bold tracking-tighter">WhatsTitlePut<span class="text-primary">.</span></h1>
+            
+            <!-- LOGO SUPERIOR Y TÍTULO -->
+            <div class="flex items-center gap-3">
+                <!-- REEMPLAZA EL SRC CON TU LOGO -->
+                <img src="TU_LOGO_AQUI.png" alt="WhatsTitlePut Logo" class="h-8 w-auto object-contain" onerror="this.style.display='none'">
+                <h1 class="text-2xl font-bold tracking-tighter">WhatsTitlePut<span class="text-primary">.</span></h1>
+            </div>
             
             <div class="flex items-center gap-3">
                 <button id="history-btn" class="hidden text-sm font-medium bg-black text-white hover:bg-gray-800 rounded-lg px-4 py-2 transition-colors items-center gap-2">
                     <i class="fa-solid fa-clock-rotate-left"></i> <span class="hidden sm:inline">Historial</span>
                 </button>
-                <button id="auth-btn" class="text-sm font-medium border border-gray-300 hover:border-primary hover:text-primary rounded-lg px-4 py-2 transition-colors flex items-center gap-2 bg-white">
-                    <i class="fa-brands fa-google"></i> <span id="auth-text" class="hidden sm:inline">Iniciar Sesión</span>
+                <!-- Botón de Cerrar Sesión (Oculto por defecto hasta que inicie sesión) -->
+                <button id="auth-btn" class="hidden text-sm font-medium border border-gray-300 hover:border-red-500 hover:text-red-500 rounded-lg px-4 py-2 transition-colors flex items-center gap-2 bg-white">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="hidden sm:inline">Cerrar Sesión</span>
                 </button>
             </div>
         </div>
@@ -132,7 +149,11 @@
         
         <div id="chat-messages" class="flex-1 overflow-y-auto chat-scroll flex flex-col space-y-6 pb-4 px-2">
             <div class="flex w-full mt-4 space-x-4 max-w-2xl">
-                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-black flex items-center justify-center text-white font-bold text-sm">AI</div>
+                <!-- AVATAR GIF DE LA IA (Mensaje de bienvenida) -->
+                <img src="TU_GIF_AI_AQUI.gif" alt="AI" class="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200 bg-white shadow-sm" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <!-- Fallback por si no carga el GIF -->
+                <div class="hidden flex-shrink-0 h-10 w-10 rounded-full bg-black items-center justify-center text-white font-bold text-sm">AI</div>
+                
                 <div>
                     <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-gray-200 text-black shadow-sm">
                         <p class="mb-2">Hola. Sube una imagen y generaré texto SEO optimizado.</p>
@@ -226,8 +247,12 @@
         const sendBtn = document.getElementById('send-btn');
         const chatMessages = document.getElementById('chat-messages');
         const dragOverlay = document.getElementById('drag-overlay');
-        const authBtn = document.getElementById('auth-btn');
-        const authText = document.getElementById('auth-text');
+        
+        // Auth y UI
+        const loginOverlay = document.getElementById('login-overlay');
+        const mainLoginBtn = document.getElementById('main-login-btn');
+        const authBtn = document.getElementById('auth-btn'); // Botón superior derecho (ahora solo para cerrar sesión)
+        
         const historyBtn = document.getElementById('history-btn');
         const historySidebar = document.getElementById('history-sidebar');
         const closeHistoryBtn = document.getElementById('close-history');
@@ -260,28 +285,46 @@
             onAuthStateChanged(auth, (user) => {
                 currentUser = user;
                 if (user) {
-                    authText.textContent = "Cerrar Sesión";
+                    // Si está logueado: Oculta la pantalla difuminada y muestra el botón de cerrar sesión
+                    loginOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        loginOverlay.classList.add('hidden');
+                        loginOverlay.classList.remove('flex');
+                    }, 500); // Transición suave
+                    
+                    authBtn.classList.remove('hidden');
+                    authBtn.classList.add('flex');
                     historyBtn.classList.remove('hidden');
                     historyBtn.classList.add('flex');
                 } else {
-                    authText.textContent = "Iniciar Sesión";
+                    // Si NO está logueado: Muestra la pantalla difuminada y oculta menú
+                    loginOverlay.classList.remove('hidden');
+                    loginOverlay.classList.add('flex');
+                    setTimeout(() => loginOverlay.style.opacity = '1', 10);
+
+                    authBtn.classList.add('hidden');
+                    authBtn.classList.remove('flex');
                     historyBtn.classList.add('hidden');
                     historyBtn.classList.remove('flex');
                     historySidebar.classList.remove('open');
                 }
             });
 
+            // Botón principal de login en el medio de la pantalla
+            mainLoginBtn.addEventListener('click', async () => {
+                try {
+                    const provider = new GoogleAuthProvider();
+                    await signInWithPopup(auth, provider);
+                } catch (error) {
+                    console.error("Error al iniciar sesión:", error);
+                    alert("Hubo un error al conectar con Google.");
+                }
+            });
+
+            // Botón de cerrar sesión en la esquina superior derecha
             authBtn.addEventListener('click', async () => {
                 if (currentUser) {
                     await signOut(auth);
-                } else {
-                    try {
-                        const provider = new GoogleAuthProvider();
-                        await signInWithPopup(auth, provider);
-                    } catch (error) {
-                        console.error("Error al iniciar sesión:", error);
-                        addMessageToChat('Error', 'Hubo un error al conectar con Google.');
-                    }
                 }
             });
         }
@@ -492,9 +535,16 @@
             const isUser = sender !== "IA" && sender !== "Error";
             const isError = sender === "Error";
             let content = isHtml ? text : `<p>${text}</p>`;
+            
+            // Reemplazo el círculo negro de la IA por la etiqueta IMG (con fallback)
+            const aiAvatarHtml = `
+                <img src="TU_GIF_AI_AQUI.gif" alt="AI" class="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200 bg-white shadow-sm" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <div class="hidden flex-shrink-0 h-10 w-10 rounded-full ${isError ? 'bg-red-500' : 'bg-black'} text-white items-center justify-center font-bold text-sm shadow-sm">${isError ? '!' : 'AI'}</div>
+            `;
+            
             const msgHtml = `
             <div class="flex w-full mt-4 space-x-4 max-w-2xl ${isUser ? 'ml-auto justify-end message-out' : 'message-in'}">
-                ${!isUser ? `<div class="flex-shrink-0 h-10 w-10 rounded-full ${isError ? 'bg-red-500 text-white' : 'bg-black text-white'} flex items-center justify-center font-bold text-sm shadow-sm">${isError ? '!' : 'AI'}</div>` : ''}
+                ${!isUser ? aiAvatarHtml : ''}
                 <div class="${isUser ? 'order-first mr-4' : ''}">
                     <div class="${isUser ? 'bg-white border border-gray-200' : (isError ? 'bg-white border border-red-200 text-red-600' : 'bg-white/90 backdrop-blur-sm border border-gray-200 text-black')} p-5 rounded-xl shadow-sm">
                         <div class="prose prose-sm">${content}</div>
@@ -509,9 +559,15 @@
 
         function showTypingIndicator() {
             const id = 'typing-' + Date.now();
+            
+            const aiAvatarHtml = `
+                <img src="TU_GIF_AI_AQUI.gif" alt="AI" class="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200 bg-white shadow-sm" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <div class="hidden flex-shrink-0 h-10 w-10 rounded-full bg-black text-white items-center justify-center font-bold text-sm shadow-sm">AI</div>
+            `;
+
             const msgHtml = `
             <div id="${id}" class="flex w-full mt-4 space-x-4 max-w-2xl message-in">
-                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-black flex items-center justify-center text-white font-bold text-sm shadow-sm">AI</div>
+                ${aiAvatarHtml}
                 <div><div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-gray-200 flex items-center h-[54px] shadow-sm"><div class="typing-indicator flex"><span class="bg-primary"></span><span class="bg-primary"></span><span class="bg-primary"></span></div></div></div>
             </div>`;
             chatMessages.insertAdjacentHTML('beforeend', msgHtml);
