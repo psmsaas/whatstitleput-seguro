@@ -5,16 +5,15 @@ export default async function handler(req, res) {
 
     try {
         const API_KEY = process.env.GEMINI_API_KEY;
-        // Apuntamos al modelo oficial, definitivo y estable a largo plazo (NO MODIFICAR)
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${API_KEY}`;
 
-        const { base64ImageData, mimeType, userTimeZone, generationMode } = req.body;
+        const { base64ImageData, mimeType, userTimeZone, generationMode, textPrompt } = req.body;
 
-        if (!base64ImageData) {
-            return res.status(400).json({ error: 'Falta la imagen' });
+        // VERIFICACIÓN: Debe haber O una imagen O un texto (o ambos)
+        if (!base64ImageData && !textPrompt) {
+            return res.status(400).json({ error: 'Falta la consulta de texto o la imagen' });
         }
 
-        // LÓGICA DE LOCALIZACIÓN Y VOCABULARIO
         let languageInstruction = `Usa un español neutro.`;
         if (userTimeZone && userTimeZone.includes('Argentina')) {
             languageInstruction = `
@@ -38,103 +37,107 @@ export default async function handler(req, res) {
             ACTÚA COMO UN COMMUNITY MANAGER EXPERTO EN SEO PARA REDES SOCIALES (INSTAGRAM/TIKTOK).
             
             REGLA VITAL DE ENFOQUE (SOLO ACCESORIOS):
-            Si la imagen muestra a una modelo, IGNORA POR COMPLETO SU ROPA (vestidos, blusas, etc.). ESTAMOS VENDIENDO SUS ACCESORIOS (aros, collares, anillos, pulseras, tobilleras, ganchos). Describe CÓMO los accesorios iluminan su rostro o complementan el look, pero NUNCA intentes vender o describir su indumentaria.
+            Si hay una imagen de una modelo, IGNORA POR COMPLETO SU ROPA. ESTAMOS VENDIENDO SUS ACCESORIOS. Describe CÓMO los accesorios complementan el look, pero NUNCA describas su indumentaria.
             
-            REGLAS ESTRICTAS DE MATERIALES (PREVENIR RECLAMOS):
-            1. PROHIBIDO decir "Oro", "Plata", "Diamante" a menos que haya un sello muy claro.
-            2. Usa SIEMPRE términos precisos: "Acero Quirúrgico", "Símil Oro", "Color Dorado", "Plateado", "Aleación de Metal", "Cristales", "Strass". 
+            REGLAS ESTRICTAS DE MATERIALES:
+            1. PROHIBIDO decir "Oro", "Plata", "Diamante" a menos que se te indique explícitamente.
+            2. Usa SIEMPRE términos precisos: "Acero Quirúrgico", "Símil Oro", "Color Dorado", "Plateado", "Cristales". 
             
-            REGLAS PARA LA DESCRIPCIÓN (CAPTION OPTIMIZADO PARA ALGORITMOS):
-            1. Tono elegante, persuasivo y cercano. Atrapa la atención en la primera línea.
-            2. SEO EN TEXTO: Integra palabras clave de búsqueda de forma natural.
-            3. PROHIBIDO GENERAR UN TÍTULO. Ve directo a la descripción.
-            4. ESTRUCTURA: [Línea de gancho enfocada en el accesorio] + [Descripción de beneficios estéticos integrando keywords] + [Llamado a la acción suave].
-            
-            REGLAS PARA HASHTAGS (ESTRATEGIA DE ALCANCE ORGÁNICO):
-            Genera un máximo de 6 hashtags siguiendo esta mezcla exacta:
-            - 2 Hashtags de nicho (ej. #ArosAceroQuirurgico)
-            - 2 Hashtags descriptivos (qué se ve en la foto)
-            - 2 Hashtags de categoría amplia/tendencia (ej. #ModaArgentina, #AccesoriosMujer)
+            REGLAS PARA LA DESCRIPCIÓN Y HASHTAGS:
+            1. Tono elegante, persuasivo y cercano.
+            2. SEO EN TEXTO: Integra palabras clave de forma natural.
+            3. ESTRUCTURA: [Gancho enfocado en accesorio] + [Beneficios estéticos] + [Llamado a la acción suave].
+            4. Genera máximo 6 hashtags (2 nicho, 2 descriptivos, 2 amplia).
             
             FORMATO DE SALIDA ESPERADO (ESTRICTO HTML):
-            [Tu descripción elegante y SEO optimizada aquí, enfocada SOLO en los accesorios. Usa 1-2 emojis sutiles]<br><br>
+            [Descripción elegante y SEO optimizada]<br><br>
             <strong>Hashtags:</strong> #hash1 #hash2 #hash3 #hash4 #hash5
             `;
         } else if (generationMode === 'audit') {
             modeInstructions = `
             ACTÚA COMO UN EXPERTO EN FOTOGRAFÍA DE PRODUCTO Y SEO VISUAL PARA E-COMMERCE.
             
-            Tu tarea es evaluar la imagen proporcionada para determinar si cumple con los estándares de un e-commerce de alto nivel y redes sociales profesionales.
-            
-            REGLAS DE EVALUACIÓN:
-            1. Calidad visual: Evalúa la iluminación, nitidez, contrastes y el fondo (¿distrae o resalta el producto?).
-            2. Enfoque Comercial: ¿El producto (el accesorio/joyería) es el protagonista indiscutido o se pierde en la foto?
-            3. SEO Visual y Presentación: ¿Es una imagen limpia que Google Images indexaría bien? ¿Transmite confianza y calidad premium?
+            Tu tarea es evaluar la imagen proporcionada o responder a la consulta del usuario sobre fotografía y presentación.
+            Si el usuario envía una imagen, evalúa la iluminación, el fondo y si el producto es el protagonista indiscutido.
             
             FORMATO DE SALIDA ESPERADO (ESTRICTO HTML):
             <h3>Puntuación General: [Puntaje del 1 al 10] ⭐️</h3><br>
             <strong>Fortalezas:</strong><br>
-            - [Punto fuerte 1 de la imagen]<br>
-            - [Punto fuerte 2 de la imagen]<br><br>
+            - [Punto fuerte 1]<br>
+            - [Punto fuerte 2]<br><br>
             <strong>Áreas de Mejora:</strong><br>
-            - [Recomendación técnica o de estilo 1]<br>
-            - [Recomendación técnica o de estilo 2]<br><br>
-            <strong>Veredicto Comercial:</strong> [Breve conclusión de 2 líneas sobre si la imagen sirve para Portada de E-commerce, solo para historias de Redes Sociales, o si debería tomarse de nuevo].
+            - [Recomendación 1]<br>
+            - [Recomendación 2]<br><br>
+            <strong>Veredicto Comercial:</strong> [Breve conclusión de 2 líneas].
             `;
         } else if (generationMode === 'advisor') {
             modeInstructions = `
-            ACTÚA COMO UN EXPERTO 'CLOSER' DE VENTAS Y ESPECIALISTA EN NEUROMARKETING.
+            ACTÚA COMO UN EXPERTO 'CLOSER' DE VENTAS, ESPECIALISTA EN NEUROMARKETING Y ATENCIÓN AL CLIENTE.
             
-            El usuario te enviará una captura de pantalla de un chat (WhatsApp/Instagram) con un cliente.
-            Tu objetivo es analizar la conversación, identificar la barrera u objeción (precio, dudas, tiempo) y ayudar al usuario a destrabar y cerrar la venta.
+            El usuario te hará una consulta escrita sobre una venta, objeción de un cliente, O te enviará una captura de un chat (WhatsApp/Instagram).
+            Tu objetivo es analizar la situación (precio, dudas, tiempo, "lo pienso y te aviso") y ayudar al usuario a destrabar y cerrar la venta dándole un consejo y opciones para copiar y pegar.
             
-            REGLAS DE EVALUACIÓN:
-            1. Analiza el tono del cliente: ¿Está muy interesado, dudoso, o solo pidiendo precio para curiosear?
-            2. Identifica la objeción oculta o la traba en la conversación.
-            3. Crea Respuestas Estratégicas: Proporciona 2 o 3 opciones exactas de respuesta que el usuario pueda copiar y pegar directamente al cliente, usando técnicas de cierre probadas (como escasez, empatía, o aportar valor añadido).
+            REGLAS DE EVALUACIÓN Y RESPUESTA:
+            1. Diagnostica rápidamente qué está frenando al cliente basándote en la consulta o imagen.
+            2. Proporciona 2 o 3 opciones exactas de respuesta que el usuario pueda copiar y pegar, usando técnicas de persuasión y neuromarketing.
             
             FORMATO DE SALIDA ESPERADO (ESTRICTO HTML):
-            <h3>Diagnóstico de la venta: 🕵🏻‍♂️</h3><br>
-            [Breve análisis de 2 líneas sobre lo que realmente está pensando o pidiendo el cliente según su forma de escribir]<br><br>
-            <strong>Opción 1: Cierre Empático (Suave) 🤝</strong><br>
+            <h3>Diagnóstico de la situación: 🕵🏻‍♂️</h3><br>
+            [Breve análisis directo de 2 líneas sobre la objeción o situación del cliente]<br><br>
+            <strong>Opción 1: Cierre Empático 🤝</strong><br>
             <em>"[Texto exacto y persuasivo para copiar, pegar y enviar al cliente]"</em><br>
-            <span style="color:gray; font-size:13px;">(Por qué funciona: [Explicación breve de la psicología detrás de esta respuesta])</span><br><br>
-            <strong>Opción 2: Cierre por Escasez/Urgencia ⏰</strong><br>
+            <span style="color:gray; font-size:13px;">(Por qué funciona: [Explicación psicológica])</span><br><br>
+            <strong>Opción 2: Cierre por Escasez / Urgencia ⏰</strong><br>
             <em>"[Texto exacto y persuasivo para copiar, pegar y enviar al cliente]"</em><br>
-            <span style="color:gray; font-size:13px;">(Por qué funciona: [Explicación breve de la psicología detrás de esta respuesta])</span><br><br>
-            <strong>Próximo paso sugerido:</strong> [Consejo de un renglón sobre qué hacer si el cliente responde, o si te deja en visto].
+            <span style="color:gray; font-size:13px;">(Por qué funciona: [Explicación psicológica])</span><br><br>
+            <strong>Próximo paso:</strong> [Consejo sobre qué hacer si el cliente no responde].
             `;
         } else {
             // E-COMMERCE MODE
             modeInstructions = `
             ACTÚA COMO UN COPYWRITER EXPERTO EN SEO ON-PAGE PARA E-COMMERCE.
             
-            REGLAS ESTRICTAS DE MATERIALES (PREVENIR RECLAMOS Y FALSAS KEYWORDS):
-            1. PROHIBIDO decir "Oro", "Plata", "Diamante" o "Zafiro".
-            2. Usa términos precisos de bisutería: "Acero Quirúrgico", "Símil Oro", "Color Dorado", "Plateado", "Color Plata", "Aleación de Metal", "Cristales", "Strass".
+            REGLAS ESTRICTAS DE MATERIALES:
+            PROHIBIDO decir "Oro", "Plata", "Diamante". Usa "Acero Quirúrgico", "Símil Oro", "Color Dorado", "Plateado".
             
-            REGLAS ESTRICTAS PARA EL TÍTULO (H1 / TITLE TAG OPTIMIZADO PARA GOOGLE):
-            1. ESTRUCTURA OBLIGATORIA DE LONG-TAIL KEYWORD: [Producto] + [Característica Principal/Diseño] + [Material] + [Género/Público (si aplica)].
-            2. PROHIBICIONES EN EL TÍTULO: 
-               - NUNCA uses símbolos como "|", "-", ":".
-               - NUNCA incluyas palabras de marketing, emociones o adjetivos vacíos ("Elegancia", "Suerte", "Brillo Único", "Hermoso", "Joyería con Significado").
-               - DEBE SER 100% DESCRIPTIVO Y TÉCNICO.
+            REGLAS DEL TÍTULO:
+            ESTRUCTURA: [Producto] + [Característica Principal] + [Material] + [Público]. NUNCA uses símbolos como "|", "-", ":". Cero marketing barato en el título.
             
-            REGLAS PARA LA DESCRIPCIÓN (METADESCRIPTION Y FICHA DE PRODUCTO):
-            1. PRIMERA PARTE (Ficha Técnica SEO): Usa formato de viñetas claras (-). Detalla medidas (deja espacio en blanco si no lo sabes: [___] cm), tipo de cierre, material exacto y características visuales clave.
-            2. SEGUNDA PARTE (Persuasión y Conversión): Escribe un párrafo de venta persuasivo. AQUÍ SÍ puedes hablar de elegancia, ocasiones de uso y usar un llamado a la acción.
-            3. PROHIBIDO generar hashtags en este modo.
+            REGLAS DE DESCRIPCIÓN:
+            Ficha técnica en viñetas (-) y luego un párrafo de venta persuasivo. SIN hashtags.
             
-            FORMATO DE SALIDA ESPERADO (ESTRICTO HTML - NUNCA USES LISTAS NUMERADAS COMO "1." o "2."):
-            <strong>Título:</strong> [Tu Título SEO Long-Tail Aquí sin frases de marketing y sin barras verticales]<br><br>
+            FORMATO DE SALIDA ESPERADO (ESTRICTO HTML - NUNCA USES LISTAS NUMERADAS):
+            <strong>Título:</strong> [Título SEO Long-Tail]<br><br>
             <strong>Descripción:</strong><br>
-            [Lista de viñetas técnicas y de medidas aquí]<br><br>
-            [Párrafo de venta persuasivo aquí]
+            [Lista de viñetas técnicas]<br><br>
+            [Párrafo de venta persuasivo]
             `;
         }
 
+        // CONSTRUCCIÓN DINÁMICA DEL PROMPT (Dependiendo si hay texto, imagen o ambos)
+        const partsArray = [];
+        
+        let contextualInstruction = "";
+        if (textPrompt && base64ImageData) {
+            contextualInstruction = `Consulta/Contexto del usuario: "${textPrompt}"\n\nInstrucción: Analiza la imagen adjunta basándote en la consulta del usuario. CUMPLE ESTRICTAMENTE CON TODAS LAS REGLAS DE ESTRUCTURA Y FORMATO DE TU ROL.`;
+        } else if (textPrompt && !base64ImageData) {
+            contextualInstruction = `Consulta del usuario: "${textPrompt}"\n\nInstrucción: Responde a la consulta del usuario de la mejor forma posible. CUMPLE ESTRICTAMENTE CON TODAS LAS REGLAS DE ESTRUCTURA Y FORMATO DE TU ROL. Si tu formato pide evaluar una imagen y no la hay, adapta el formato para dar el mejor consejo escrito posible.`;
+        } else {
+            contextualInstruction = `Instrucción: Analiza la imagen adjunta. CUMPLE ESTRICTAMENTE CON TODAS LAS REGLAS DE ESTRUCTURA Y FORMATO PROVISTAS EN LAS INSTRUCCIONES DEL SISTEMA.`;
+        }
+
+        partsArray.push({ text: contextualInstruction });
+
+        if (base64ImageData) {
+            partsArray.push({
+                inlineData: {
+                    mimeType: mimeType || 'image/jpeg',
+                    data: base64ImageData
+                }
+            });
+        }
+
         const payload = {
-            // CORRECCIÓN CRÍTICA: systemInstruction debe escribirse así (camelCase)
             systemInstruction: {
                 parts: [
                     { text: languageInstruction },
@@ -144,15 +147,7 @@ export default async function handler(req, res) {
             contents: [
                 {
                     role: "user",
-                    parts: [
-                        { text: "Analiza la imagen. CUMPLE ESTRICTAMENTE CON TODAS LAS REGLAS DE ESTRUCTURA Y FORMATO PROVISTAS EN LAS INSTRUCCIONES DEL SISTEMA." },
-                        {
-                            inlineData: {
-                                mimeType: mimeType || 'image/jpeg',
-                                data: base64ImageData
-                            }
-                        }
-                    ]
+                    parts: partsArray
                 }
             ]
         };
