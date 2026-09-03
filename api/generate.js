@@ -81,6 +81,29 @@ export default async function handler(req, res) {
             - [Recomendación técnica o de estilo 2]<br><br>
             <strong>Veredicto Comercial:</strong> [Breve conclusión de 2 líneas sobre si la imagen sirve para Portada de E-commerce, solo para historias de Redes Sociales, o si debería tomarse de nuevo].
             `;
+        } else if (generationMode === 'advisor') {
+            modeInstructions = `
+            ACTÚA COMO UN EXPERTO 'CLOSER' DE VENTAS Y ESPECIALISTA EN NEUROMARKETING.
+            
+            El usuario te enviará una captura de pantalla de un chat (WhatsApp/Instagram) con un cliente.
+            Tu objetivo es analizar la conversación, identificar la barrera u objeción (precio, dudas, tiempo) y ayudar al usuario a destrabar y cerrar la venta.
+            
+            REGLAS DE EVALUACIÓN:
+            1. Analiza el tono del cliente: ¿Está muy interesado, dudoso, o solo pidiendo precio para curiosear?
+            2. Identifica la objeción oculta o la traba en la conversación.
+            3. Crea Respuestas Estratégicas: Proporciona 2 o 3 opciones exactas de respuesta que el usuario pueda copiar y pegar directamente al cliente, usando técnicas de cierre probadas (como escasez, empatía, o aportar valor añadido).
+            
+            FORMATO DE SALIDA ESPERADO (ESTRICTO HTML):
+            <h3>Diagnóstico de la venta: 🕵🏻‍♂️</h3><br>
+            [Breve análisis de 2 líneas sobre lo que realmente está pensando o pidiendo el cliente según su forma de escribir]<br><br>
+            <strong>Opción 1: Cierre Empático (Suave) 🤝</strong><br>
+            <em>"[Texto exacto y persuasivo para copiar, pegar y enviar al cliente]"</em><br>
+            <span style="color:gray; font-size:13px;">(Por qué funciona: [Explicación breve de la psicología detrás de esta respuesta])</span><br><br>
+            <strong>Opción 2: Cierre por Escasez/Urgencia ⏰</strong><br>
+            <em>"[Texto exacto y persuasivo para copiar, pegar y enviar al cliente]"</em><br>
+            <span style="color:gray; font-size:13px;">(Por qué funciona: [Explicación breve de la psicología detrás de esta respuesta])</span><br><br>
+            <strong>Próximo paso sugerido:</strong> [Consejo de un renglón sobre qué hacer si el cliente responde, o si te deja en visto].
+            `;
         } else {
             // E-COMMERCE MODE
             modeInstructions = `
@@ -111,6 +134,7 @@ export default async function handler(req, res) {
         }
 
         const payload = {
+            // CORRECCIÓN CRÍTICA: systemInstruction debe escribirse así (camelCase)
             systemInstruction: {
                 parts: [
                     { text: languageInstruction },
@@ -121,7 +145,7 @@ export default async function handler(req, res) {
                 {
                     role: "user",
                     parts: [
-                        { text: "Genera el texto para este producto. CUMPLE ESTRICTAMENTE CON TODAS LAS REGLAS DE ESTRUCTURA Y FORMATO PROVISTAS EN LAS INSTRUCCIONES DEL SISTEMA." },
+                        { text: "Analiza la imagen. CUMPLE ESTRICTAMENTE CON TODAS LAS REGLAS DE ESTRUCTURA Y FORMATO PROVISTAS EN LAS INSTRUCCIONES DEL SISTEMA." },
                         {
                             inlineData: {
                                 mimeType: mimeType || 'image/jpeg',
