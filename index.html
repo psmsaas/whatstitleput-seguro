@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsTitlePut - Tu Asesor Seo de confianza</title>
+    <title>WhatsTitlePut - Tu asesor Seo de confianza</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -128,8 +128,8 @@
                 
                 <div>
                     <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-gray-200 text-black shadow-sm">
-                        <p class="mb-2">Hola. Sube una imagen y generaré texto optimizado o auditaré su calidad visual.</p>
-                        <p class="text-xs text-gray-500 mt-2">Elige el modo (E-commerce, Red Social, o Auditoría) antes de generar.</p>
+                        <p class="mb-2">Hola. Sube una imagen y te ayudaré con tus ventas y redes.</p>
+                        <p class="text-xs text-gray-500 mt-2">Elige un modo abajo antes de subir tu imagen o captura de chat.</p>
                     </div>
                 </div>
             </div>
@@ -137,11 +137,12 @@
 
         <div class="mt-auto bg-white/90 backdrop-blur-md border-t border-gray-100 pt-4 pb-2 relative transition-all duration-300 rounded-t-xl" id="drop-zone">
             
-            <!-- Botones de Modo -->
+            <!-- Botones de Modo (4 opciones) -->
             <div class="flex justify-center gap-2 sm:gap-4 mb-3 px-2 flex-wrap">
                 <button id="mode-ecommerce" class="text-xs font-semibold px-4 py-1.5 rounded-full bg-primary text-white transition-colors shadow-sm ring-2 ring-primary ring-offset-1">E-commerce (SEO)</button>
                 <button id="mode-social" class="text-xs font-semibold px-4 py-1.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors border border-transparent">Red Social</button>
                 <button id="mode-audit" class="text-xs font-semibold px-4 py-1.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors border border-transparent"><i class="fa-solid fa-camera mr-1"></i> Auditoría</button>
+                <button id="mode-advisor" class="text-xs font-semibold px-4 py-1.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors border border-transparent"><i class="fa-solid fa-comments-dollar mr-1"></i> Asesor</button>
             </div>
 
             <div class="flex items-center justify-between w-full relative gap-3 px-2">
@@ -190,7 +191,7 @@
 
         const appId = 'whatstitleput-app';
         
-        // PEGA AQUÍ TU CONFIGURACIÓN REAL DE FIREBASE. 
+        // ⚠️⚠️⚠️ ¡ATENCIÓN! REEMPLAZA CON TUS DATOS DE FIREBASE ⚠️⚠️⚠️
         const firebaseConfig = {
             apiKey: "AIzaSyAwcc7FczgBZYshzdSn0eFdH8m95Iwk5So",
             authDomain: "whatstitleput.firebaseapp.com" ,
@@ -230,6 +231,7 @@
         const modeEcommerceBtn = document.getElementById('mode-ecommerce');
         const modeSocialBtn = document.getElementById('mode-social');
         const modeAuditBtn = document.getElementById('mode-audit');
+        const modeAdvisorBtn = document.getElementById('mode-advisor');
 
         let selectedFile = null;
         let base64ImageData = null;
@@ -244,11 +246,13 @@
             modeEcommerceBtn.className = currentMode === 'ecommerce' ? activeClass : inactiveClass;
             modeSocialBtn.className = currentMode === 'social' ? activeClass : inactiveClass;
             modeAuditBtn.className = currentMode === 'audit' ? activeClass : inactiveClass;
+            modeAdvisorBtn.className = currentMode === 'advisor' ? activeClass : inactiveClass;
         }
 
         modeEcommerceBtn.addEventListener('click', () => updateModeButtons('ecommerce'));
         modeSocialBtn.addEventListener('click', () => updateModeButtons('social'));
         modeAuditBtn.addEventListener('click', () => updateModeButtons('audit'));
+        modeAdvisorBtn.addEventListener('click', () => updateModeButtons('advisor'));
 
         const BACKEND_URL = '/api/generate';
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
