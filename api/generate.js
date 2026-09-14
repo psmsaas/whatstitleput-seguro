@@ -5,11 +5,9 @@ export default async function handler(req, res) {
 
     try {
         const API_KEY = process.env.GEMINI_API_KEY;
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${API_KEY}`;
 
         const { base64ImageData, mimeType, userTimeZone, generationMode, textPrompt } = req.body;
 
-        // VERIFICACIÓN: Debe haber O una imagen O un texto (o ambos)
         if (!base64ImageData && !textPrompt) {
             return res.status(400).json({ error: 'Falta la consulta de texto o la imagen' });
         }
@@ -23,6 +21,10 @@ export default async function handler(req, res) {
             - "Pendientes" o "Zarcillos" -> ESCRIBE SIEMPRE "Aros"
             - "Gafas" -> ESCRIBE SIEMPRE "Anteojos" o "Lentes"
             - "Bolso" -> ESCRIBE SIEMPRE "Cartera" o "Bandolera"
+            - "Sujetador" -> ESCRIBE SIEMPRE "Corpiño"
+            - "Falda" -> ESCRIBE SIEMPRE "Pollera"
+            - "Camiseta" o "Playera" -> ESCRIBE SIEMPRE "Remera"
+            - "Jersey" o "Suéter" -> ESCRIBE SIEMPRE "Saco", "Pulóver" o "Cárdigan"
             - "Gargantilla" -> Usa preferentemente "Collar corto" o "Choker"
             - "Tobillera" -> Manten "Tobillera"
             - "Anillo" -> Manten "Anillo"
@@ -114,7 +116,6 @@ export default async function handler(req, res) {
             `;
         }
 
-        // CONSTRUCCIÓN DINÁMICA DEL PROMPT (Dependiendo si hay texto, imagen o ambos)
         const partsArray = [];
         
         let contextualInstruction = "";
@@ -151,42 +152,57 @@ export default async function handler(req, res) {
                 }
             ]
         };
-        
-let response;
-        let retries = 3;
+
+        // Lista de modelos ordenados de mayor a menor prioridad
+        const fallbackModels = ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash'];
+        let resultData = null;
         let lastErrorText = "";
 
-        // Sistema de auto-reintento para evitar errores 503 (servidor saturado)
-        while (retries > 0) {
-            response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+        for (const modelName of fallbackModels) {
+            try {
+                console.log(`Intentando conectar con el modelo: ${modelName}`);
+                const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
 
-            if (response.ok) {
-                break; // ¡Funcionó! Salimos del bucle
-            } else if (response.status === 503) {
-                retries--;
-                console.warn(`Servidor de Google saturado (503). Esperando 2 segundos para reintentar... (${retries} intentos restantes)`);
-                await new Promise(res => setTimeout(res, 2000)); // Pausa de 2 segundos
-            } else {
-                lastErrorText = await response.text();
-                break; // Es otro error, no vale la pena reintentar
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    resultData = await response.json();
+                    console.log(`¡Éxito conectando con el modelo: ${modelName}!`);
+                    break; // Si funciona, rompemos el bucle y dejamos de buscar
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.warn(`Fallo temporal con el modelo ${modelName} (Código ${response.status})`);
+                    lastErrorText = `API Error: ${response.status}`;
+                    
+                    // Si el error es 503 (Saturado), 429 (Límite de tráfico) o 404 (No existe), pasa al siguiente
+                    if (response.status === 503 || response.status === 429 || response.status === 404) {
+                        continue; 
+                    } else {
+                        // Si es un error crítico (como API Key inválida), frena todo
+                        throw new Error(lastErrorText); 
+                    }
+                }
+            } catch (e) {
+                lastErrorText = e.message;
+                console.error(`Error interno intentando usar ${modelName}:`, e.message);
+                // La cascada continuará automáticamente al siguiente modelo
             }
         }
 
-        if (!response || !response.ok) {
-            const errorText = lastErrorText || await response.text().catch(() => "Error de conexión");
-            console.error("API Error Details:", errorText);
-            throw new Error(`API Error: ${response ? response.status : 'Desconocido'} - ${errorText}`);
+        if (!resultData) {
+            throw new Error(`Los servidores gratuitos de Google están extremadamente saturados en este momento. Todos los modelos de reserva fallaron. Intenta de nuevo en unos minutos.`);
         }
 
-        const result = await response.json();
-        res.status(200).json(result);
+        return res.status(200).json(resultData);
 
     } catch (error) {
-        console.error("Error en el servidor:", error);
-        res.status(500).json({ error: 'Error interno del servidor', details: error.message });
+        console.error('Error final devuelto al usuario:', error);
+        return res.status(500).json({ error: 'Error procesando la solicitud en el servidor' });
     }
 }
