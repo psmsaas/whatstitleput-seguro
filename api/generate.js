@@ -151,17 +151,35 @@ export default async function handler(req, res) {
                 }
             ]
         };
+        
+let response;
+        let retries = 3;
+        let lastErrorText = "";
 
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        // Sistema de auto-reintento para evitar errores 503 (servidor saturado)
+        while (retries > 0) {
+            response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-        if (!response.ok) {
-            const errorText = await response.text();
+            if (response.ok) {
+                break; // ¡Funcionó! Salimos del bucle
+            } else if (response.status === 503) {
+                retries--;
+                console.warn(`Servidor de Google saturado (503). Esperando 2 segundos para reintentar... (${retries} intentos restantes)`);
+                await new Promise(res => setTimeout(res, 2000)); // Pausa de 2 segundos
+            } else {
+                lastErrorText = await response.text();
+                break; // Es otro error, no vale la pena reintentar
+            }
+        }
+
+        if (!response || !response.ok) {
+            const errorText = lastErrorText || await response.text().catch(() => "Error de conexión");
             console.error("API Error Details:", errorText);
-            throw new Error(`API Error: ${response.status} - ${errorText}`);
+            throw new Error(`API Error: ${response ? response.status : 'Desconocido'} - ${errorText}`);
         }
 
         const result = await response.json();
