@@ -365,6 +365,7 @@
 
         dropZone.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files), false);
 
+        // NUEVO: Escuchar evento de pegar imagen (Ctrl+V)
         document.addEventListener('paste', (e) => {
             const items = (e.clipboardData || window.clipboardData).items;
             const filesToPaste = [];
@@ -464,12 +465,30 @@
             const typingId = showTypingIndicator();
             scrollToBottom();
 
+            // NUEVO: Temporizador de 7 segundos para aviso de demora
+            const delayTimer = setTimeout(() => {
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) {
+                    const container = typingEl.lastElementChild;
+                    if (container) {
+                        const delayMsg = document.createElement('div');
+                        delayMsg.className = "text-xs text-primary font-medium mt-3 italic message-in bg-purple-50 px-3 py-2 rounded-lg border border-purple-100 shadow-sm flex items-center";
+                        delayMsg.innerHTML = '<i class="fa-solid fa-stopwatch mr-2 text-base"></i> El servidor se encuentra con tardanza. Agradecemos enormemente tu paciencia...';
+                        container.appendChild(delayMsg);
+                        scrollToBottom();
+                    }
+                }
+            }, 7000);
+
             try {
                 const response = await fetch(BACKEND_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+
+                // Si responde antes de los 7 seg, cancelamos el cartel
+                clearTimeout(delayTimer);
 
                 if (!response.ok) throw new Error(`Error: ${response.status}`);
                 const result = await response.json();
@@ -492,6 +511,10 @@
                 } else { throw new Error("Formato inválido"); }
             } catch (error) {
                 console.error("Error backend:", error);
+                
+                // Si hay error también cancelamos el cartel para mostrar el error real
+                clearTimeout(delayTimer);
+                
                 removeMessage(typingId);
                 addMessageToChat('Error', 'Lo siento, ocurrió un error procesando tu solicitud.');
             }
