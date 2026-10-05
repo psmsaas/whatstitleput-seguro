@@ -5,10 +5,11 @@ export default async function handler(req, res) {
 
     try {
         const API_KEY = process.env.GEMINI_API_KEY;
-
+        // Leemos los datos que nos envía el frontend (una imagen, texto, o ambos)
         const { base64ImageData, mimeType, userTimeZone, generationMode, textPrompt } = req.body;
 
-        if (!base64ImageData && !textPrompt) {
+        const hasImage = !!base64ImageData;
+        if (!hasImage && !textPrompt) {
             return res.status(400).json({ error: 'Falta la consulta de texto o la imagen' });
         }
 
@@ -59,8 +60,8 @@ export default async function handler(req, res) {
             modeInstructions = `
             ACTÚA COMO UN EXPERTO EN FOTOGRAFÍA DE PRODUCTO Y SEO VISUAL PARA E-COMMERCE.
             
-            Tu tarea es evaluar la imagen proporcionada o responder a la consulta del usuario sobre fotografía y presentación.
-            Si el usuario envía una imagen, evalúa la iluminación, el fondo y si el producto es el protagonista indiscutido.
+            Tu tarea es evaluar las imágenes proporcionadas o responder a la consulta del usuario sobre fotografía y presentación.
+            Evalúa la iluminación, el fondo y si el producto es el protagonista indiscutido.
             
             FORMATO DE SALIDA ESPERADO (ESTRICTO HTML):
             <h3>Puntuación General: [Puntaje del 1 al 10] ⭐️</h3><br>
@@ -74,42 +75,41 @@ export default async function handler(req, res) {
             `;
         } else if (generationMode === 'advisor') {
             modeInstructions = `
-            ACTÚA COMO UN EXPERTO 'CLOSER' DE VENTAS, ESPECIALISTA EN NEUROMARKETING Y ATENCIÓN AL CLIENTE.
+            ACTÚA COMO UN EXPERTO 'CLOSER' DE VENTAS Y ESPECIALISTA EN NEUROMARKETING Y ATENCIÓN AL CLIENTE.
             
-            El usuario te hará una consulta escrita sobre una venta, objeción de un cliente, O te enviará una captura de un chat (WhatsApp/Instagram).
-            Tu objetivo es analizar la situación (precio, dudas, tiempo, "lo pienso y te aviso") y ayudar al usuario a destrabar y cerrar la venta dándole un consejo y opciones para copiar y pegar.
-            
-            REGLAS DE EVALUACIÓN Y RESPUESTA:
-            1. Diagnostica rápidamente qué está frenando al cliente basándote en la consulta o imagen.
-            2. Proporciona 2 o 3 opciones exactas de respuesta que el usuario pueda copiar y pegar, usando técnicas de persuasión y neuromarketing.
+            El usuario te hará una consulta escrita sobre ventas o enviará una captura de chat.
+            Tu objetivo es dar un consejo estratégico y opciones de respuesta listas para copiar y pegar.
             
             FORMATO DE SALIDA ESPERADO (ESTRICTO HTML):
-            <h3>Diagnóstico de la situación: 🕵🏻‍♂️</h3><br>
-            [Breve análisis directo de 2 líneas sobre la objeción o situación del cliente]<br><br>
+            <h3>Diagnóstico: 🕵🏻‍♂️</h3><br>
+            [Breve análisis directo de la situación]<br><br>
             <strong>Opción 1: Cierre Empático 🤝</strong><br>
-            <em>"[Texto exacto y persuasivo para copiar, pegar y enviar al cliente]"</em><br>
+            <em>"[Texto persuasivo para copiar, pegar y enviar al cliente]"</em><br>
             <span style="color:gray; font-size:13px;">(Por qué funciona: [Explicación psicológica])</span><br><br>
             <strong>Opción 2: Cierre por Escasez / Urgencia ⏰</strong><br>
-            <em>"[Texto exacto y persuasivo para copiar, pegar y enviar al cliente]"</em><br>
+            <em>"[Texto persuasivo para copiar, pegar y enviar al cliente]"</em><br>
             <span style="color:gray; font-size:13px;">(Por qué funciona: [Explicación psicológica])</span><br><br>
-            <strong>Próximo paso:</strong> [Consejo sobre qué hacer si el cliente no responde].
+            <strong>Consejo extra:</strong> [Breve recomendación adicional].
             `;
         } else {
-            // E-COMMERCE MODE
+            // E-COMMERCE MODE (Con reglas estrictas de títulos cortos)
             modeInstructions = `
-            ACTÚA COMO UN COPYWRITER EXPERTO EN SEO ON-PAGE PARA E-COMMERCE.
+            ACTÚA COMO UN COPYWRITER EXPERTO EN SEO PARA E-COMMERCE.
             
             REGLAS ESTRICTAS DE MATERIALES:
-            PROHIBIDO decir "Oro", "Plata", "Diamante". Usa "Acero Quirúrgico", "Símil Oro", "Color Dorado", "Plateado".
+            PROHIBIDO decir "Oro", "Plata", "Diamante". Usa "Acero Quirúrgico", "Símil Oro", "Color Dorado", "Plateado", "Strass", "Cristales".
             
-            REGLAS DEL TÍTULO:
-            ESTRUCTURA: [Producto] + [Característica Principal] + [Material] + [Público]. NUNCA uses símbolos como "|", "-", ":". Cero marketing barato en el título.
+            REGLAS DEL TÍTULO (¡CRÍTICO!):
+            1. CORTO Y DIRECTO: Máximo 5 a 6 palabras.
+            2. ESTRUCTURA ESTRICTA: [Tipo de Accesorio] + [Detalle visual] + en + [Material]. Ejemplo: "Collar Choker con Strass en Acero Quirúrgico".
+            3. PROHIBICIÓN ABSOLUTA DE RELLENO: NO uses palabras como "Elegante", "Hermoso", "Exclusivo", "Chic", "Para Mujer", "Moda", "Estilo", "Impresionante".
+            4. NUNCA uses símbolos como "|", "-", ":". 
             
             REGLAS DE DESCRIPCIÓN:
-            Ficha técnica en viñetas (-) y luego un párrafo de venta persuasivo. SIN hashtags.
+            Ficha técnica en viñetas (-) y luego un párrafo de venta persuasivo y cercano. SIN hashtags.
             
             FORMATO DE SALIDA ESPERADO (ESTRICTO HTML - NUNCA USES LISTAS NUMERADAS):
-            <strong>Título:</strong> [Título SEO Long-Tail]<br><br>
+            <strong>Título:</strong> [Título corto y 100% descriptivo]<br><br>
             <strong>Descripción:</strong><br>
             [Lista de viñetas técnicas]<br><br>
             [Párrafo de venta persuasivo]
@@ -117,19 +117,19 @@ export default async function handler(req, res) {
         }
 
         const partsArray = [];
-        
         let contextualInstruction = "";
-        if (textPrompt && base64ImageData) {
-            contextualInstruction = `Consulta/Contexto del usuario: "${textPrompt}"\n\nInstrucción: Analiza la imagen adjunta basándote en la consulta del usuario. CUMPLE ESTRICTAMENTE CON TODAS LAS REGLAS DE ESTRUCTURA Y FORMATO DE TU ROL.`;
-        } else if (textPrompt && !base64ImageData) {
-            contextualInstruction = `Consulta del usuario: "${textPrompt}"\n\nInstrucción: Responde a la consulta del usuario de la mejor forma posible. CUMPLE ESTRICTAMENTE CON TODAS LAS REGLAS DE ESTRUCTURA Y FORMATO DE TU ROL. Si tu formato pide evaluar una imagen y no la hay, adapta el formato para dar el mejor consejo escrito posible.`;
+
+        if (textPrompt && hasImage) {
+            contextualInstruction = `Consulta del usuario: "${textPrompt}"\n\nInstrucción: Analiza la imagen adjunta basándote en la consulta del usuario. CUMPLE ESTRICTAMENTE CON TODAS LAS REGLAS DE ESTRUCTURA Y FORMATO DE TU ROL.`;
+        } else if (textPrompt && !hasImage) {
+            contextualInstruction = `Consulta del usuario: "${textPrompt}"\n\nInstrucción: Responde a la consulta de la mejor forma posible. CUMPLE ESTRICTAMENTE CON LAS REGLAS DE ESTRUCTURA Y FORMATO DE TU ROL.`;
         } else {
             contextualInstruction = `Instrucción: Analiza la imagen adjunta. CUMPLE ESTRICTAMENTE CON TODAS LAS REGLAS DE ESTRUCTURA Y FORMATO PROVISTAS EN LAS INSTRUCCIONES DEL SISTEMA.`;
         }
 
         partsArray.push({ text: contextualInstruction });
 
-        if (base64ImageData) {
+        if (hasImage) {
             partsArray.push({
                 inlineData: {
                     mimeType: mimeType || 'image/jpeg',
@@ -153,50 +153,47 @@ export default async function handler(req, res) {
             ]
         };
 
-        // Lista de modelos ordenados de mayor a menor prioridad
         const fallbackModels = ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash'];
         let resultData = null;
         let lastErrorText = "";
 
         for (const modelName of fallbackModels) {
             try {
-                console.log(`Intentando conectar con el modelo: ${modelName}`);
-                const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
-
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (response.ok) {
-                    resultData = await response.json();
-                    console.log(`¡Éxito conectando con el modelo: ${modelName}!`);
-                    break; // Si funciona, rompemos el bucle y dejamos de buscar
-                } else {
-                    const errorData = await response.json().catch(() => ({}));
-                    console.warn(`Fallo temporal con el modelo ${modelName} (Código ${response.status})`);
-                    lastErrorText = `API Error: ${response.status}`;
+                let retries = 3;
+                while (retries > 0) {
+                    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
                     
-                    // Si el error es 503 (Saturado), 429 (Límite de tráfico) o 404 (No existe), pasa al siguiente
-                    if (response.status === 503 || response.status === 429 || response.status === 404) {
-                        continue; 
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        resultData = await response.json();
+                        retries = 0; // Rompemos el While
+                        break; // Rompemos el For de modelos
+                    } else if (response.status === 503 || response.status === 429) {
+                        console.warn(`[${modelName}] Servidor saturado (${response.status}). Reintentando...`);
+                        retries--;
+                        if (retries > 0) {
+                            await new Promise(res => setTimeout(res, 2000));
+                        } else {
+                            throw new Error(`API Error: ${response.status}`);
+                        }
                     } else {
-                        // Si es un error crítico (como API Key inválida), frena todo
-                        throw new Error(lastErrorText); 
+                        throw new Error(`API Error Crítico: ${response.status}`);
                     }
                 }
+                if (resultData) break;
             } catch (e) {
+                console.error(`Fallo intentando con ${modelName}:`, e.message);
                 lastErrorText = e.message;
-                console.error(`Error interno intentando usar ${modelName}:`, e.message);
-                // La cascada continuará automáticamente al siguiente modelo
             }
         }
 
         if (!resultData) {
-            throw new Error(`Los servidores gratuitos de Google están extremadamente saturados en este momento. Todos los modelos de reserva fallaron. Intenta de nuevo en unos minutos.`);
+            throw new Error(`Todos los modelos fallaron. Último error: ${lastErrorText}`);
         }
 
         return res.status(200).json(resultData);
