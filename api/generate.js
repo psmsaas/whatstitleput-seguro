@@ -22,10 +22,6 @@ export default async function handler(req, res) {
             - "Pendientes" o "Zarcillos" -> ESCRIBE SIEMPRE "Aros"
             - "Gafas" -> ESCRIBE SIEMPRE "Anteojos" o "Lentes"
             - "Bolso" -> ESCRIBE SIEMPRE "Cartera" o "Bandolera"
-            - "Sujetador" -> ESCRIBE SIEMPRE "Corpiño"
-            - "Falda" -> ESCRIBE SIEMPRE "Pollera"
-            - "Camiseta" o "Playera" -> ESCRIBE SIEMPRE "Remera"
-            - "Jersey" o "Suéter" -> ESCRIBE SIEMPRE "Saco", "Pulóver" o "Cárdigan"
             - "Gargantilla" -> Usa preferentemente "Collar corto" o "Choker"
             - "Tobillera" -> Manten "Tobillera"
             - "Anillo" -> Manten "Anillo"
@@ -92,7 +88,7 @@ export default async function handler(req, res) {
             <strong>Consejo extra:</strong> [Breve recomendación adicional].
             `;
         } else {
-            // E-COMMERCE MODE (Con reglas estrictas de títulos cortos)
+            // E-COMMERCE MODE (Con reglas estrictas de títulos cortos y descripción sin relleno)
             modeInstructions = `
             ACTÚA COMO UN COPYWRITER EXPERTO EN SEO PARA E-COMMERCE.
             
@@ -106,13 +102,12 @@ export default async function handler(req, res) {
             4. NUNCA uses símbolos como "|", "-", ":". 
             
             REGLAS DE DESCRIPCIÓN:
-            Ficha técnica en viñetas (-) y luego un párrafo de venta persuasivo y cercano. SIN hashtags.
+            SOLO Ficha técnica en viñetas (-). PROHIBIDO agregar párrafos de venta, comentarios adicionales o hashtags al final.
             
             FORMATO DE SALIDA ESPERADO (ESTRICTO HTML - NUNCA USES LISTAS NUMERADAS):
             <strong>Título:</strong> [Título corto y 100% descriptivo]<br><br>
             <strong>Descripción:</strong><br>
-            [Lista de viñetas técnicas]<br><br>
-            [Párrafo de venta persuasivo]
+            [Lista de viñetas técnicas]
             `;
         }
 
@@ -174,7 +169,7 @@ export default async function handler(req, res) {
                         retries = 0; // Rompemos el While
                         break; // Rompemos el For de modelos
                     } else if (response.status === 503 || response.status === 429) {
-                        console.warn(`[${modelName}] Servidor saturado (${response.status}). Reintentando...`);
+                        console.warn(`[${modelName}] Servidor saturado (${response.status}). Esperando 2 segundos para reintentar... (${retries - 1} intentos restantes)`);
                         retries--;
                         if (retries > 0) {
                             await new Promise(res => setTimeout(res, 2000));
